@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="vi">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Gửi giáo án | Bộ Quốc Phòng</title>
+	<link rel="stylesheet" href="style.css">
+	<script defer src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+	<script defer src="app.js"></script>
+</head>
+<body data-page="submission" hidden>
+	<div class="shell">
+		<aside class="sidebar" data-sidebar-placeholder></aside>
+		<main class="main">
+			<header class="topbar" data-topbar-placeholder></header>
+			<div class="page">
+				<div class="editor-layout">
+					<div class="heading"><div><p class="eyebrow">Luồng giáo án</p><h1>Gửi giáo án</h1><p class="subtitle">Tải lên tệp Word hoặc PDF, điền thông tin giáo án và gửi người cùng cấp hoặc cấp trên một cấp phê duyệt.</p></div></div>
+					<div class="editor-meta">
+						<label for="course-type">Loại giáo án<select class="field-select" id="course-type"><option value="">-- Chọn loại giáo án --</option><option>Quân sự</option><option>Chính trị</option><option>Hậu cần kỹ thuật</option></select></label>
+						<label for="course-subtype" id="course-subtype-field" hidden>Chọn nội dung<select class="field-select" id="course-subtype"><option value="">-- Chọn nội dung --</option></select></label>
+					</div>
+					<section class="panel" id="submission-workspace" hidden>
+						<div class="form-grid">
+							<label for="document-title">Tiêu đề giáo án<input class="field-input" id="document-title" maxlength="250" placeholder="Ví dụ: Giáo án huấn luyện quý IV" required></label>
+							<label for="document-recipient">Người nhận<select class="field-select" id="document-recipient"><option value="">Đang tải danh sách</option></select></label>
+							<label for="file-input">Tệp giáo án<input class="field-input" id="file-input" type="file" accept=".doc,.docx,.pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf" multiple><small class="field-hint">Bắt buộc ít nhất một tệp Word (.doc/.docx) hoặc PDF. Có thể chọn nhiều tệp, tối đa 15 MB mỗi tệp.</small></label>
+						</div>
+						<div class="attachment-list" id="attachment-list"></div>
+						<div class="editor-actions"><span class="editor-message" id="editor-message" role="status" aria-live="polite"></span><div class="editor-buttons"><button class="button" id="save-draft" type="button"><i data-lucide="save"></i>Lưu bản nháp</button><button class="button primary" id="submit-document" type="button"><i data-lucide="send"></i>Gửi phê duyệt</button></div></div>
+					</section>
+					<section class="panel word-template-panel" aria-labelledby="word-template-heading">
+						<div class="panel-head"><div><h2 id="word-template-heading">Mẫu giáo án Word</h2><p>Tải tệp mẫu gốc, hoàn thiện bằng Word rồi tải lên gửi duyệt để giữ nguyên định dạng.</p></div></div>
+						<div class="word-template-list" id="word-template-list" role="status"><span class="muted">Đang tải mẫu Word...</span></div>
+					</section>
+					<section class="panel drafts-panel">
+						<div class="panel-head"><div><h2>Giáo án đã lưu</h2><p>Mở bản nháp để tiếp tục hoặc xóa giáo án chưa gửi.</p></div></div>
+						<div class="toolbar"><label class="search"><i data-lucide="search"></i><input id="draft-search" type="search" placeholder="Tìm tiêu đề hoặc tên tệp" aria-label="Tìm bản nháp"></label></div>
+						<div id="drafts-list" class="drafts-list"></div>
+					</section>
+				</div>
+			</div>
+		</main>
+	</div>
+</body>
+</html>

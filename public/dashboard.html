@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="vi">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Dashboard | Bộ Quốc Phòng</title>
+	<link rel="stylesheet" href="style.css">
+	<script defer src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+	<script defer src="app.js"></script>
+</head>
+<body data-page="dashboard" hidden>
+	<div class="shell">
+		<aside class="sidebar" data-sidebar-placeholder></aside>
+		<main class="main">
+			<header class="topbar" data-topbar-placeholder></header>
+			<div class="page">
+				<div class="heading"><div><p class="eyebrow">Luồng giáo án</p><h1>Dashboard phê duyệt</h1><p class="subtitle">Theo dõi giáo án gửi đến, người nhận và tiến độ xử lý.</p></div></div>
+				<div class="stats">
+					<div class="panel stat"><div class="stat-label">Tổng giáo án</div><div class="stat-value" id="total-count">00</div></div>
+					<div class="panel stat pending-stat"><div class="stat-label">Chờ phê duyệt</div><div class="stat-value" id="pending-count">00</div></div>
+					<div class="panel stat approved-stat"><div class="stat-label">Đã phê duyệt</div><div class="stat-value" id="approved-count">00</div></div>
+				</div>
+				<section class="panel">
+					<div class="panel-head"><div><h2>Danh sách giáo án</h2><p>Xem tệp Word hoặc PDF đã gửi, ghi chú hoặc xử lý phê duyệt.</p></div><a class="button" href="quan-ly.html" data-admin-only hidden><i data-lucide="network"></i>Quản lý tài khoản</a></div>
+					<div class="toolbar"><label class="search"><i data-lucide="search"></i><input id="document-search" type="search" placeholder="Tìm tiêu đề giáo án, người gửi hoặc người nhận" aria-label="Tìm giáo án"></label><select id="status-filter" class="field-select" aria-label="Lọc theo trạng thái"><option value="">Tất cả trạng thái</option><option>Chờ phê duyệt</option><option>Đã phê duyệt</option><option>Từ chối</option></select></div>
+					<div class="table-wrap"><table><thead><tr><th>Giáo án</th><th>Nơi gửi</th><th>Người nhận</th><th>Thời gian gửi</th><th>Tệp đính kèm</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody id="documents-body"></tbody></table></div>
+				</section>
+			</div>
+		</main>
+	</div>
+	<dialog id="preview-dialog" class="preview-dialog" aria-labelledby="preview-title">
+		<div class="preview-shell">
+			<header class="preview-header">
+				<div class="preview-heading"><p class="eyebrow">Chi tiết giáo án</p><h2 id="preview-title">Xem giáo án</h2></div>
+				<button class="button icon-only" onclick="this.closest('dialog').close()" aria-label="Đóng" title="Đóng"><i data-lucide="x"></i></button>
+			</header>
+			<div class="preview-meta" id="preview-meta"></div>
+			<div class="files-list" id="preview-files"></div>
+			<footer class="preview-footer"><button class="button" onclick="this.closest('dialog').close()">Đóng</button></footer>
+		</div>
+	</dialog>
+	<dialog id="notes-dialog"><div class="dialog-head"><h2>Ghi chú giáo án</h2><button class="button icon-only" onclick="this.closest('dialog').close()" aria-label="Đóng"><i data-lucide="x"></i></button></div><div class="dialog-content"><p class="doc-sub" id="note-document-title"></p><div class="note-list" id="note-list"></div><label class="form-grid" style="padding:0">Thêm ghi chú<textarea class="field-textarea" id="note-input" placeholder="Nhập nhận xét hoặc yêu cầu chỉnh sửa..."></textarea></label></div><div class="dialog-actions"><button class="button" onclick="this.closest('dialog').close()">Đóng</button><button class="button primary" id="add-note"><i data-lucide="send"></i>Gửi ghi chú</button></div></dialog>
+	<dialog id="approve-dialog"><div class="dialog-head"><h2>Xác nhận phê duyệt</h2><button class="button icon-only" onclick="this.closest('dialog').close()" aria-label="Đóng"><i data-lucide="x"></i></button></div><div class="dialog-content"><p>Bạn xác nhận phê duyệt giáo án sau?</p><strong id="approve-title"></strong><p class="muted">Thao tác này sẽ cập nhật trạng thái giáo án thành “Đã phê duyệt”.</p></div><div class="dialog-actions"><button class="button" onclick="this.closest('dialog').close()">Hủy</button><button class="button primary" id="confirm-approve"><i data-lucide="check"></i>Xác nhận phê duyệt</button></div></dialog>
+	<dialog id="reject-dialog"><div class="dialog-head"><h2>Xác nhận từ chối</h2><button class="button icon-only" onclick="this.closest('dialog').close()" aria-label="Đóng"><i data-lucide="x"></i></button></div><div class="dialog-content"><p>Bạn xác nhận từ chối phê duyệt giáo án sau?</p><strong id="reject-title"></strong><label class="form-grid" style="padding:0">Lý do từ chối (không bắt buộc)<textarea class="field-textarea" id="reject-reason" maxlength="2000" placeholder="Nhập lý do để người gửi biết nội dung cần chỉnh sửa..."></textarea></label><p class="muted">Giáo án bị từ chối sẽ được thông báo bằng trạng thái trong danh sách.</p></div><div class="dialog-actions"><button class="button" onclick="this.closest('dialog').close()">Hủy</button><button class="button danger" id="confirm-reject"><i data-lucide="x"></i>Xác nhận từ chối</button></div></dialog>
+	<dialog id="files-dialog"><div class="dialog-head"><h2 id="files-title">Tệp đính kèm</h2><button class="button icon-only" onclick="this.closest('dialog').close()" aria-label="Đóng"><i data-lucide="x"></i></button></div><div class="dialog-content"><div class="files-list" id="files-list"></div></div><div class="dialog-actions"><button class="button" onclick="this.closest('dialog').close()">Đóng</button></div></dialog>
+</body>
+</html>

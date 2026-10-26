@@ -1,0 +1,100 @@
+CREATE TABLE IF NOT EXISTS users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    username TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
+    password_hash TEXT NOT NULL,
+    level SMALLINT CHECK (level BETWEEN 1 AND 5),
+    manager_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    is_admin BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CHECK ((is_admin AND level IS NULL) OR (NOT is_admin AND level IS NOT NULL))
+);
+
+CREATE TABLE IF NOT EXISTS drafts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    course_type TEXT NOT NULL CHECK (course_type IN ('Quân sự', 'Chính trị', 'Hậu cần kỹ thuật')),
+    course_subtype TEXT NOT NULL DEFAULT '',
+    recipient_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CHECK (
+        (course_type = 'Quân sự' AND course_subtype IN ('Pháo', 'Công', 'Bộ', 'TT', 'Phòng không')) OR
+        (course_type = 'Chính trị' AND course_subtype = '') OR
+        (course_type = 'Hậu cần kỹ thuật' AND course_subtype IN ('Quân nhu', 'Doanh trại', 'Quân y'))
+    )
+);
+
+CREATE TABLE IF NOT EXISTS word_templates (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    file_name TEXT NOT NULL,
+    course_type TEXT NOT NULL CHECK (course_type IN ('Quân sự', 'Chính trị', 'Hậu cần kỹ thuật')),
+    course_subtype TEXT NOT NULL DEFAULT '',
+    content_type TEXT NOT NULL CHECK (content_type IN (
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/msword'
+    )),
+    size_bytes INTEGER NOT NULL CHECK (size_bytes > 0),
+    data BYTEA NOT NULL,
+    created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CHECK (
+        (course_type = 'Quân sự' AND course_subtype IN ('', 'Pháo', 'Công', 'Bộ', 'TT', 'Phòng không')) OR
+        (course_type = 'Chính trị' AND course_subtype = '') OR
+        (course_type = 'Hậu cần kỹ thuật' AND course_subtype IN ('', 'Quân nhu', 'Doanh trại', 'Quân y'))
+    )
+);
+
+CREATE TABLE IF NOT EXISTS documents (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    sender_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    recipient_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    title TEXT NOT NULL,
+    course_type TEXT NOT NULL CHECK (course_type IN ('Quân sự', 'Chính trị', 'Hậu cần kỹ thuật')),
+    course_subtype TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'Chờ phê duyệt'
+        CHECK (status IN ('Chờ phê duyệt', 'Đã phê duyệt', 'Từ chối')),
+    sent_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    approved_at TIMESTAMPTZ,
+    approved_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    CHECK (
+        (course_type = 'Quân sự' AND course_subtype IN ('Pháo', 'Công', 'Bộ', 'TT', 'Phòng không')) OR
+        (course_type = 'Chính trị' AND course_subtype = '') OR
+        (course_type = 'Hậu cần kỹ thuật' AND course_subtype IN ('Quân nhu', 'Doanh trại', 'Quân y'))
+    )
+);
+
+CREATE TABLE IF NOT EXISTS document_notes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+    author_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    text TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS attachments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    draft_id UUID REFERENCES drafts(id) ON DELETE CASCADE,
+    document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    content_type TEXT NOT NULL DEFAULT 'application/octet-stream',
+    size_bytes INTEGER NOT NULL CHECK (size_bytes >= 0),
+    data BYTEA NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CHECK ((draft_id IS NOT NULL AND document_id IS NULL) OR (draft_id IS NULL AND document_id IS NOT NULL))
+);
+
+CREATE TABLE IF NOT EXISTS qt_sessions (
+    sid VARCHAR NOT NULL PRIMARY KEY,
+    sess JSON NOT NULL,
+    expire TIMESTAMP(6) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS drafts_owner_updated_idx ON drafts(owner_id, updated_at DESC);
+CREATE INDEX IF NOT EXISTS word_templates_category_idx ON word_templates(course_type, course_subtype, file_name);
+CREATE INDEX IF NOT EXISTS documents_sender_sent_idx ON documents(sender_id, sent_at DESC);
+CREATE INDEX IF NOT EXISTS documents_recipient_sent_idx ON documents(recipient_id, sent_at DESC);
+CREATE INDEX IF NOT EXISTS document_notes_document_idx ON document_notes(document_id, created_at);
+CREATE INDEX IF NOT EXISTS attachments_draft_idx ON attachments(draft_id);
+CREATE INDEX IF NOT EXISTS attachments_document_idx ON attachments(document_id);
+CREATE INDEX IF NOT EXISTS qt_sessions_expire_idx ON qt_sessions(expire);

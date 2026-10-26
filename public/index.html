@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="vi">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="theme-color" content="#20392f">
+	<title>Đăng nhập | Bộ Quốc Phòng</title>
+	<link rel="stylesheet" href="style.css">
+	<script defer src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+	<script defer src="app.js"></script>
+</head>
+<body class="login-page" data-page="login">
+	<main class="login-layout">
+		<section class="login-brand-panel">
+			<a class="login-brand" href="index.html"><span class="brand-mark"><img src="Vietnam_Ministry_of_National_Defence_emblem.svg.webp" alt="Biểu trưng Bộ Quốc Phòng"></span><span>Bộ Quốc Phòng</span></a>
+			<div class="login-intro"><p class="eyebrow">Hệ thống giáo án nội bộ</p><h1>Chỉ huy rõ ràng.<br>Giáo án thông suốt.</h1><p>Theo dõi giáo án, gửi tệp trình cấp trên phê duyệt và quản lý tài liệu tập trung.</p></div>
+			<div class="login-steps"><span><i data-lucide="file-up"></i>Gửi giáo án</span><i data-lucide="arrow-right"></i><span><i data-lucide="chevrons-up"></i>Trình duyệt</span><i data-lucide="arrow-right"></i><span><i data-lucide="badge-check"></i>Phê duyệt</span></div>
+			<div class="login-panel-foot"><span>BỘ QUỐC PHÒNG</span><span>HỆ THỐNG QUẢN LÝ VĂN BẢN</span></div>
+		</section>
+		<section class="login-form-panel">
+			<form class="login-form" id="login-form">
+				<div class="login-symbol"><i data-lucide="shield-check"></i></div>
+				<p class="eyebrow">CỔNG TRUY CẬP</p>
+				<h2>Đăng nhập</h2>
+				<p class="login-subtitle">Nhập tài khoản để tiếp tục vào hệ thống.</p>
+				<label for="login-email">Tài khoản<input class="field-input" id="login-email" name="username" type="text" autocomplete="username" placeholder="Tên đăng nhập" required></label>
+				<label for="login-password">Mật khẩu<span class="password-wrap"><input class="field-input" id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Nhập mật khẩu" required><button class="password-toggle" id="toggle-password" type="button" title="Hiện mật khẩu" aria-label="Hiện mật khẩu"><i data-lucide="eye"></i></button></span></label>
+				<p class="login-error" id="login-error" role="alert" aria-live="polite"></p>
+				<button class="button primary login-submit" type="submit">Đăng nhập <i data-lucide="arrow-right"></i></button>
+				<div class="demo-access"><strong>Đăng nhập hệ thống</strong><span>Tài khoản được cấp bởi người quản lý hệ thống.</span></div>
+				<p class="login-note">Thông tin đăng nhập được xác thực bởi API và PostgreSQL.</p>
+			</form>
+		</section>
+	</main>
+</body>
+</html>

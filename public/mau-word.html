@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="vi">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Quản lý mẫu Word | Bộ Quốc Phòng</title>
+	<link rel="stylesheet" href="style.css">
+	<script defer src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+	<script defer src="app.js"></script>
+</head>
+<body data-page="word-templates" hidden>
+	<div class="shell">
+		<aside class="sidebar" data-sidebar-placeholder></aside>
+		<main class="main">
+			<header class="topbar" data-topbar-placeholder></header>
+			<div class="page">
+				<div class="heading"><div><p class="eyebrow">Khu vực dành riêng cho quản lý</p><h1>Mẫu tệp giáo án Word</h1><p class="subtitle">Tải lên và quản lý các tệp Word mẫu theo loại giáo án và nội dung; người dùng tải tệp gốc về để hoàn thiện giáo án.</p></div></div>
+				<section class="panel template-management" aria-labelledby="word-template-heading">
+					<div class="panel-head"><div><h2 id="word-template-heading">Tệp Word mẫu</h2><p>Chấp nhận .doc hoặc .docx. Tệp được lưu và cung cấp nguyên bản, không chuyển đổi nội dung hay định dạng.</p></div></div>
+					<div class="template-management-grid">
+						<form class="form-grid" id="word-template-form">
+							<label for="word-template-course-type">Loại giáo án<select class="field-select" id="word-template-course-type" required><option value="">-- Chọn loại giáo án --</option><option>Quân sự</option><option>Chính trị</option><option>Hậu cần kỹ thuật</option></select></label>
+							<label for="word-template-course-subtype" id="word-template-course-subtype-field" hidden>Nội dung áp dụng<select class="field-select" id="word-template-course-subtype"><option value="">Áp dụng cho mọi nội dung</option></select></label>
+							<label for="word-template-file">Tệp Word<input class="field-input" id="word-template-file" type="file" accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" required><small class="field-hint">Tối đa 15 MB. Tệp mẫu được giữ nguyên dạng gốc.</small></label>
+							<div class="form-actions"><button class="button primary" type="submit"><i data-lucide="upload"></i>Tải mẫu Word lên</button></div>
+						</form>
+						<div class="managed-template-list" id="managed-word-template-list" aria-live="polite"></div>
+					</div>
+				</section>
+			</div>
+		</main>
+	</div>
+	<dialog class="confirm-dialog" id="delete-template-dialog" aria-labelledby="delete-template-title" aria-describedby="delete-template-description">
+		<div class="confirm-dialog-icon"><i data-lucide="trash-2"></i></div>
+		<div class="confirm-dialog-content">
+			<h2 id="delete-template-title">Xóa mẫu Word?</h2>
+			<p id="delete-template-description">Mẫu này sẽ bị xóa khỏi danh sách và người dùng không thể tải xuống nữa. Thao tác này không thể hoàn tác.</p>
+			<strong class="confirm-dialog-filename" id="delete-template-filename"></strong>
+			<p class="confirm-dialog-error" id="delete-template-error" role="alert" hidden></p>
+		</div>
+		<div class="confirm-dialog-actions">
+			<button class="button" id="cancel-template-delete" type="button">Giữ lại mẫu</button>
+			<button class="button danger" id="confirm-template-delete" type="button"><i data-lucide="trash-2"></i>Xóa mẫu</button>
+		</div>
+	</dialog>
+</body>
+</html>

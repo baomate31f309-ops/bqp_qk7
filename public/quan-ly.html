@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="vi">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Quản lý | Bộ Quốc Phòng</title>
+	<link rel="stylesheet" href="style.css">
+	<script defer src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+	<script defer src="app.js"></script>
+</head>
+<body data-page="management" hidden>
+	<div class="shell">
+		<aside class="sidebar" data-sidebar-placeholder></aside>
+		<main class="main">
+			<header class="topbar" data-topbar-placeholder></header>
+			<div class="page">
+				<div class="heading"><div><p class="eyebrow">Khu vực dành riêng cho quản lý</p><h1>Quản lý tài khoản</h1><p class="subtitle">Tạo tài khoản thành viên, quản lý cấp bậc và chỉ huy trực tiếp.</p></div></div>
+				<div class="management-grid">
+					<section class="panel"><div class="panel-head"><div><h2>Phân cấp theo chức vụ</h2><p>Luồng phê duyệt đi từ cấp thấp lên cấp chỉ huy.</p></div></div>
+						<div class="hierarchy">
+							<div class="level"><div><strong>Tư lệnh</strong><span>Phạm Quang Minh · Phê duyệt cao nhất</span></div><span class="count" data-count-level="5">0 người</span></div>
+							<div class="level"><div><strong>Sư đoàn trưởng</strong><span>Lê Thu Hà · Nhận trình từ trung đoàn trưởng</span></div><span class="count" data-count-level="4">0 người</span></div>
+							<div class="level"><div><strong>Trung đoàn trưởng</strong><span>Nguyễn Hoàng Nam · Nhận trình từ tiểu đoàn trưởng</span></div><span class="count" data-count-level="3">0 người</span></div>
+							<div class="level"><div><strong>Tiểu đoàn trưởng</strong><span>Trần Quốc Bảo · Nhận trình từ đại đội trưởng</span></div><span class="count" data-count-level="2">0 người</span></div>
+							<div class="level"><div><strong>Đại đội trưởng</strong><span>Nguyễn Minh Linh · Gửi giáo án lên cấp trên</span></div><span class="count" data-count-level="1">0 người</span></div>
+						</div>
+					</section>
+					<section class="panel"><div class="panel-head"><div><h2>Thêm tài khoản thành viên</h2><p>Thành viên mới sẽ xuất hiện trong danh sách tài khoản và cơ cấu chỉ huy.</p></div></div>
+						<form class="form-grid" id="member-form">
+							<label for="member-name">Họ và tên<input class="field-input" id="member-name" required placeholder="Nhập họ và tên"></label>
+							<label for="member-username">Tên đăng nhập<input class="field-input" id="member-username" required autocomplete="off" placeholder="Ví dụ: nguyen.van.a"></label>
+							<label for="member-password">Mật khẩu ban đầu<input class="field-input" id="member-password" type="password" required minlength="6" pattern="[0-9]{6,}" inputmode="numeric" title="Nhập ít nhất 6 chữ số, không dùng chữ cái hoặc ký tự khác." autocomplete="new-password" placeholder="Ít nhất 6 chữ số"><small class="field-hint">Tối thiểu 6 chữ số; chỉ sử dụng số từ 0 đến 9.</small></label>
+							<label for="member-role">Cấp<select class="field-select" id="member-role"><option value="1">Đại đội trưởng</option><option value="2">Tiểu đoàn trưởng</option><option value="3">Trung đoàn trưởng</option><option value="4">Sư đoàn trưởng</option><option value="5">Tư lệnh</option></select></label>
+							<label for="member-manager">Chỉ huy trực tiếp<select class="field-select" id="member-manager"><option value="Trần Quốc Bảo" data-level="2">Trần Quốc Bảo · Tiểu đoàn trưởng</option><option value="Nguyễn Hoàng Nam" data-level="3">Nguyễn Hoàng Nam · Trung đoàn trưởng</option><option value="Lê Thu Hà" data-level="4">Lê Thu Hà · Sư đoàn trưởng</option><option value="Phạm Quang Minh" data-level="5">Phạm Quang Minh · Tư lệnh</option><option value="Bộ Quốc phòng" data-level="6">Bộ Quốc phòng</option></select></label>
+							<div class="form-actions"><button class="button primary" type="submit"><i data-lucide="user-plus"></i>Tạo tài khoản</button></div>
+						</form>
+					</section>
+				</div>
+				<section class="panel" style="margin-top:15px"><div class="panel-head"><div><h2>Danh sách tài khoản thành viên</h2><p>Tài khoản, chức vụ và người chỉ huy trực tiếp.</p></div></div><div class="table-wrap"><table><thead><tr><th>Họ và tên</th><th>Tài khoản</th><th>Cấp</th><th>Chỉ huy trực tiếp</th></tr></thead><tbody id="member-list"></tbody></table></div></section>
+			</div>
+		</main>
+	</div>
+</body>
+</html>

@@ -1,0 +1,30 @@
+2026-10-26 07:24:58 +07 LOG:  database system was shut down at 2026-10-25 20:13:22 +07
+2026-10-26 07:29:58 +07 LOG:  checkpoint starting: time
+2026-10-26 07:29:59 +07 LOG:  checkpoint complete: wrote 6 buffers (0.0%), wrote 3 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.654 s, sync=0.136 s, total=0.859 s; sync files=7, longest=0.032 s, average=0.020 s; distance=33 kB, estimate=33 kB; lsn=0/1D82628, redo lsn=0/1D825D0
+2026-10-26 07:34:58 +07 LOG:  checkpoint starting: time
+2026-10-26 07:35:07 +07 LOG:  checkpoint complete: wrote 74 buffers (0.5%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=8.112 s, sync=1.128 s, total=9.328 s; sync files=50, longest=0.043 s, average=0.023 s; distance=451 kB, estimate=451 kB; lsn=0/1DF5250, redo lsn=0/1DF3438
+2026-10-26 07:38:55 +07 ERROR:  new row for relation "word_templates" violates check constraint "word_templates_check"
+2026-10-26 07:38:55 +07 DETAIL:  Failing row contains (61113862-3f0e-4518-8e29-2977a36099bb, format-check.docx, Qu?n s?, Ph?o, application/vnd.openxmlformats-officedocument.wordprocessingml.d..., 12, \x504b0304102030400a00feff, null, 2026-10-26 07:38:55.638639+07).
+2026-10-26 07:38:55 +07 STATEMENT:  INSERT INTO word_templates (file_name, course_type, course_subtype, content_type, size_bytes, data) VALUES ('format-check.docx', 'Qu?n s?', 'Ph?o', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', $1, $2) RETURNING id
+2026-10-26 07:39:58 +07 LOG:  checkpoint starting: time
+2026-10-26 07:40:07 +07 LOG:  checkpoint complete: wrote 71 buffers (0.4%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=7.837 s, sync=0.620 s, total=8.537 s; sync files=50, longest=0.024 s, average=0.013 s; distance=317 kB, estimate=438 kB; lsn=0/1E42BE8, redo lsn=0/1E42B90
+2026-10-26 07:44:58 +07 LOG:  checkpoint starting: time
+2026-10-26 07:45:01 +07 LOG:  checkpoint complete: wrote 24 buffers (0.1%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=2.639 s, sync=0.267 s, total=2.995 s; sync files=22, longest=0.041 s, average=0.013 s; distance=58 kB, estimate=400 kB; lsn=0/1E514C8, redo lsn=0/1E51470
+2026-10-26 07:49:58 +07 LOG:  checkpoint starting: time
+2026-10-26 07:49:59 +07 LOG:  checkpoint complete: wrote 6 buffers (0.0%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.677 s, sync=0.083 s, total=0.819 s; sync files=7, longest=0.025 s, average=0.012 s; distance=23 kB, estimate=362 kB; lsn=0/1E57320, redo lsn=0/1E572C8
+2026-10-26 07:54:58 +07 LOG:  checkpoint starting: time
+2026-10-26 07:55:00 +07 LOG:  checkpoint complete: wrote 18 buffers (0.1%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=2.000 s, sync=0.265 s, total=2.355 s; sync files=17, longest=0.029 s, average=0.016 s; distance=64 kB, estimate=332 kB; lsn=0/1E675F0, redo lsn=0/1E67560
+2026-10-26 07:59:58 +07 LOG:  checkpoint starting: time
+2026-10-26 08:00:01 +07 LOG:  checkpoint complete: wrote 22 buffers (0.1%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=2.419 s, sync=0.315 s, total=2.809 s; sync files=20, longest=0.031 s, average=0.016 s; distance=72 kB, estimate=306 kB; lsn=0/1E7B0D0, redo lsn=0/1E79858
+2026-10-26 08:04:58 +07 LOG:  checkpoint starting: time
+2026-10-26 08:05:00 +07 LOG:  checkpoint complete: wrote 16 buffers (0.1%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=1.752 s, sync=0.158 s, total=1.971 s; sync files=10, longest=0.030 s, average=0.016 s; distance=95 kB, estimate=285 kB; lsn=0/1E914D8, redo lsn=0/1E91480
+2026-10-26 08:09:58 +07 LOG:  checkpoint starting: time
+2026-10-26 08:10:01 +07 LOG:  checkpoint complete: wrote 21 buffers (0.1%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=2.316 s, sync=0.190 s, total=2.588 s; sync files=19, longest=0.023 s, average=0.010 s; distance=66 kB, estimate=263 kB; lsn=0/1EA1E50, redo lsn=0/1EA1DF8
+2026-10-26 08:14:58 +07 LOG:  checkpoint starting: time
+2026-10-26 08:15:00 +07 LOG:  checkpoint complete: wrote 17 buffers (0.1%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=1.864 s, sync=0.145 s, total=2.094 s; sync files=16, longest=0.019 s, average=0.010 s; distance=70 kB, estimate=244 kB; lsn=0/1EB36C8, redo lsn=0/1EB3670
+2026-10-26 08:19:58 +07 LOG:  checkpoint starting: time
+2026-10-26 08:19:59 +07 LOG:  checkpoint complete: wrote 6 buffers (0.0%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.686 s, sync=0.223 s, total=0.996 s; sync files=7, longest=0.053 s, average=0.032 s; distance=27 kB, estimate=222 kB; lsn=0/1EBA398, redo lsn=0/1EBA340
+2026-10-26 08:24:58 +07 LOG:  checkpoint starting: time
+2026-10-26 08:25:00 +07 LOG:  checkpoint complete: wrote 20 buffers (0.1%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=2.160 s, sync=0.308 s, total=2.525 s; sync files=19, longest=0.023 s, average=0.017 s; distance=67 kB, estimate=207 kB; lsn=0/1ECB280, redo lsn=0/1ECB1F0
+2026-10-26 08:29:58 +07 LOG:  checkpoint starting: time
+2026-10-26 08:29:59 +07 LOG:  checkpoint complete: wrote 10 buffers (0.1%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=1.091 s, sync=0.108 s, total=1.277 s; sync files=6, longest=0.034 s, average=0.018 s; distance=52 kB, estimate=191 kB; lsn=0/1ED8320, redo lsn=0/1ED82C8

@@ -1,0 +1,1 @@
+Set-Location 'E:\New folder\QT'; & 'C:\Program Files\nodejs\npm.cmd' start

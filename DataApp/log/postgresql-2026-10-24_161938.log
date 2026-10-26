@@ -1,0 +1,91 @@
+2026-10-24 16:19:38 +07 LOG:  database system was shut down at 2026-10-24 16:19:21 +07
+2026-10-24 16:24:38 +07 LOG:  checkpoint starting: time
+2026-10-24 16:24:38 +07 LOG:  checkpoint complete: wrote 0 buffers (0.0%), wrote 3 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.007 s, sync=0.032 s, total=0.127 s; sync files=2, longest=0.025 s, average=0.016 s; distance=0 kB, estimate=0 kB; lsn=0/17E8B28, redo lsn=0/17E8AD0
+2026-10-24 16:38:42 +07 LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-10-24 16:38:42 +07 LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-10-24 16:39:38 +07 LOG:  checkpoint starting: time
+2026-10-25 08:32:32 +07 LOG:  checkpoint complete: wrote 982 buffers (6.0%), wrote 1 SLRU buffers; 1 WAL file(s) added, 0 removed, 0 recycled; write=57169.000 s, sync=4.252 s, total=57173.541 s; sync files=303, longest=0.291 s, average=0.015 s; distance=4645 kB, estimate=4645 kB; lsn=0/1C71FE8, redo lsn=0/1C71F58
+2026-10-25 15:25:13 +07 LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-10-25 15:34:17 +07 FATAL:  password authentication failed for user "postgres"
+2026-10-25 15:34:17 +07 DETAIL:  Connection matched file "E:/New folder/QT/DataApp/pg_hba.conf" line 117: "host    all             all             ::1/128                 scram-sha-256"
+2026-10-25 15:34:17 +07 FATAL:  password authentication failed for user "postgres"
+2026-10-25 15:34:17 +07 DETAIL:  Connection matched file "E:/New folder/QT/DataApp/pg_hba.conf" line 115: "host    all             all             127.0.0.1/32            scram-sha-256"
+2026-10-25 15:39:11 +07 LOG:  checkpoint starting: time
+2026-10-25 15:39:19 +07 FATAL:  password authentication failed for user "qt_app"
+2026-10-25 15:39:19 +07 DETAIL:  Connection matched file "E:/New folder/QT/DataApp/pg_hba.conf" line 115: "host    all             all             127.0.0.1/32            scram-sha-256"
+2026-10-25 15:39:21 +07 LOG:  checkpoint complete: wrote 93 buffers (0.6%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=10.157 s, sync=0.533 s, total=10.801 s; sync files=83, longest=0.038 s, average=0.007 s; distance=578 kB, estimate=4238 kB; lsn=0/1D03660, redo lsn=0/1D02B30
+2026-10-25 15:40:08 +07 FATAL:  password authentication failed for user "qt_app"
+2026-10-25 15:40:08 +07 DETAIL:  Connection matched file "E:/New folder/QT/DataApp/pg_hba.conf" line 115: "host    all             all             127.0.0.1/32            scram-sha-256"
+2026-10-25 15:40:23 +07 FATAL:  password authentication failed for user "qt_app"
+2026-10-25 15:40:23 +07 DETAIL:  Connection matched file "E:/New folder/QT/DataApp/pg_hba.conf" line 115: "host    all             all             127.0.0.1/32            scram-sha-256"
+2026-10-25 15:41:57 +07 FATAL:  password authentication failed for user "qt_app"
+2026-10-25 15:41:57 +07 DETAIL:  Connection matched file "E:/New folder/QT/DataApp/pg_hba.conf" line 115: "host    all             all             127.0.0.1/32            scram-sha-256"
+2026-10-25 15:43:07 +07 FATAL:  password authentication failed for user "qt_app"
+2026-10-25 15:43:07 +07 DETAIL:  Connection matched file "E:/New folder/QT/DataApp/pg_hba.conf" line 115: "host    all             all             127.0.0.1/32            scram-sha-256"
+2026-10-25 15:43:22 +07 ERROR:  syntax error at or near "123456" at character 1
+2026-10-25 15:43:22 +07 STATEMENT:  123456
+2026-10-25 15:43:51 +07 FATAL:  password authentication failed for user "qt_app"
+2026-10-25 15:43:51 +07 DETAIL:  Connection matched file "E:/New folder/QT/DataApp/pg_hba.conf" line 115: "host    all             all             127.0.0.1/32            scram-sha-256"
+2026-10-25 15:43:59 +07 FATAL:  password authentication failed for user "qt_app"
+2026-10-25 15:43:59 +07 DETAIL:  Connection matched file "E:/New folder/QT/DataApp/pg_hba.conf" line 115: "host    all             all             127.0.0.1/32            scram-sha-256"
+2026-10-25 15:44:11 +07 LOG:  checkpoint starting: time
+2026-10-25 15:44:12 +07 LOG:  checkpoint complete: wrote 1 buffers (0.0%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.119 s, sync=0.045 s, total=0.233 s; sync files=2, longest=0.027 s, average=0.023 s; distance=4 kB, estimate=3815 kB; lsn=0/1D03C38, redo lsn=0/1D03BE0
+2026-10-25 15:44:52 +07 LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-10-25 15:49:11 +07 LOG:  checkpoint starting: time
+2026-10-25 15:49:12 +07 LOG:  checkpoint complete: wrote 9 buffers (0.1%), wrote 0 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.987 s, sync=0.111 s, total=1.184 s; sync files=5, longest=0.028 s, average=0.023 s; distance=58 kB, estimate=3439 kB; lsn=0/1D12738, redo lsn=0/1D126E0
+2026-10-25 15:54:11 +07 LOG:  checkpoint starting: time
+2026-10-25 15:54:13 +07 LOG:  checkpoint complete: wrote 14 buffers (0.1%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=1.556 s, sync=0.196 s, total=1.821 s; sync files=10, longest=0.037 s, average=0.020 s; distance=31 kB, estimate=3098 kB; lsn=0/1D1A6C0, redo lsn=0/1D1A668
+2026-10-25 15:59:11 +07 LOG:  checkpoint starting: time
+2026-10-25 15:59:11 +07 LOG:  checkpoint complete: wrote 3 buffers (0.0%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.326 s, sync=0.099 s, total=0.553 s; sync files=4, longest=0.036 s, average=0.025 s; distance=6 kB, estimate=2789 kB; lsn=0/1D1BF68, redo lsn=0/1D1BF10
+2026-10-25 16:04:11 +07 LOG:  checkpoint starting: time
+2026-10-25 16:04:14 +07 LOG:  checkpoint complete: wrote 23 buffers (0.1%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=2.505 s, sync=0.208 s, total=2.785 s; sync files=17, longest=0.023 s, average=0.013 s; distance=61 kB, estimate=2516 kB; lsn=0/1D2B520, redo lsn=0/1D2B490
+2026-10-25 16:09:11 +07 LOG:  checkpoint starting: time
+2026-10-25 16:09:12 +07 LOG:  checkpoint complete: wrote 3 buffers (0.0%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.324 s, sync=0.092 s, total=0.493 s; sync files=4, longest=0.027 s, average=0.023 s; distance=9 kB, estimate=2265 kB; lsn=0/1D2DA80, redo lsn=0/1D2DA28
+2026-10-25 16:14:11 +07 LOG:  checkpoint starting: time
+2026-10-25 16:14:12 +07 LOG:  checkpoint complete: wrote 11 buffers (0.1%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=1.215 s, sync=0.266 s, total=1.528 s; sync files=10, longest=0.046 s, average=0.027 s; distance=44 kB, estimate=2043 kB; lsn=0/1D38D68, redo lsn=0/1D38D10
+2026-10-25 16:19:11 +07 LOG:  checkpoint starting: time
+2026-10-25 16:19:12 +07 LOG:  checkpoint complete: wrote 10 buffers (0.1%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=1.097 s, sync=0.129 s, total=1.288 s; sync files=9, longest=0.023 s, average=0.015 s; distance=37 kB, estimate=1843 kB; lsn=0/1D422A8, redo lsn=0/1D42250
+2026-10-25 16:34:11 +07 LOG:  checkpoint starting: time
+2026-10-25 16:34:12 +07 LOG:  checkpoint complete: wrote 2 buffers (0.0%), wrote 0 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.211 s, sync=0.045 s, total=0.321 s; sync files=2, longest=0.023 s, average=0.023 s; distance=3 kB, estimate=1659 kB; lsn=0/1D42EB0, redo lsn=0/1D42E58
+2026-10-25 16:42:08 +07 LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-10-25 16:42:08 +07 LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-10-25 16:42:08 +07 LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-10-25 16:42:08 +07 LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-10-25 16:42:08 +07 LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-10-25 16:42:08 +07 LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-10-25 16:42:08 +07 LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-10-25 16:44:11 +07 LOG:  checkpoint starting: time
+2026-10-25 16:44:11 +07 LOG:  checkpoint complete: wrote 3 buffers (0.0%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.324 s, sync=0.104 s, total=0.513 s; sync files=4, longest=0.033 s, average=0.026 s; distance=5 kB, estimate=1493 kB; lsn=0/1D445A0, redo lsn=0/1D44548
+2026-10-25 16:49:11 +07 LOG:  checkpoint starting: time
+2026-10-25 16:49:12 +07 LOG:  checkpoint complete: wrote 3 buffers (0.0%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.327 s, sync=0.095 s, total=0.489 s; sync files=4, longest=0.027 s, average=0.024 s; distance=8 kB, estimate=1345 kB; lsn=0/1D46770, redo lsn=0/1D46718
+2026-10-25 16:54:11 +07 LOG:  checkpoint starting: time
+2026-10-25 16:54:12 +07 LOG:  checkpoint complete: wrote 8 buffers (0.0%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.875 s, sync=0.176 s, total=1.133 s; sync files=7, longest=0.040 s, average=0.026 s; distance=51 kB, estimate=1215 kB; lsn=0/1D536E0, redo lsn=0/1D53650
+2026-10-25 16:59:11 +07 LOG:  checkpoint starting: time
+2026-10-25 16:59:12 +07 LOG:  checkpoint complete: wrote 5 buffers (0.0%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.541 s, sync=0.093 s, total=0.708 s; sync files=5, longest=0.023 s, average=0.019 s; distance=26 kB, estimate=1096 kB; lsn=0/1D5A0A8, redo lsn=0/1D5A050
+2026-10-25 18:44:26 +07 LOG:  checkpoint starting: time
+2026-10-25 18:44:27 +07 LOG:  checkpoint complete: wrote 4 buffers (0.0%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.450 s, sync=0.110 s, total=0.642 s; sync files=5, longest=0.031 s, average=0.022 s; distance=12 kB, estimate=988 kB; lsn=0/1D5D270, redo lsn=0/1D5D1E0
+2026-10-25 18:49:26 +07 LOG:  checkpoint starting: time
+2026-10-25 18:49:26 +07 LOG:  checkpoint complete: wrote 3 buffers (0.0%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.333 s, sync=0.065 s, total=0.495 s; sync files=4, longest=0.023 s, average=0.017 s; distance=10 kB, estimate=890 kB; lsn=0/1D5FA50, redo lsn=0/1D5F9F8
+2026-10-25 18:54:26 +07 LOG:  checkpoint starting: time
+2026-10-25 18:54:27 +07 LOG:  checkpoint complete: wrote 3 buffers (0.0%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.413 s, sync=0.096 s, total=0.571 s; sync files=4, longest=0.034 s, average=0.024 s; distance=8 kB, estimate=802 kB; lsn=0/1D61B60, redo lsn=0/1D61B08
+2026-10-25 19:04:26 +07 LOG:  checkpoint starting: time
+2026-10-25 19:04:26 +07 LOG:  checkpoint complete: wrote 3 buffers (0.0%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.330 s, sync=0.080 s, total=0.474 s; sync files=4, longest=0.023 s, average=0.020 s; distance=4 kB, estimate=722 kB; lsn=0/1D64300, redo lsn=0/1D62BB0
+2026-10-25 19:09:26 +07 LOG:  checkpoint starting: time
+2026-10-25 19:09:26 +07 LOG:  checkpoint complete: wrote 2 buffers (0.0%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.233 s, sync=0.059 s, total=0.372 s; sync files=3, longest=0.022 s, average=0.020 s; distance=13 kB, estimate=651 kB; lsn=0/1D66338, redo lsn=0/1D662E0
+2026-10-25 19:14:27 +07 LOG:  checkpoint starting: time
+2026-10-25 19:14:27 +07 LOG:  checkpoint complete: wrote 1 buffers (0.0%), wrote 0 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.106 s, sync=0.024 s, total=0.217 s; sync files=1, longest=0.024 s, average=0.024 s; distance=7 kB, estimate=587 kB; lsn=0/1D68288, redo lsn=0/1D68230
+2026-10-25 19:19:27 +07 LOG:  checkpoint starting: time
+2026-10-25 19:19:27 +07 LOG:  checkpoint complete: wrote 3 buffers (0.0%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.326 s, sync=0.084 s, total=0.486 s; sync files=4, longest=0.023 s, average=0.021 s; distance=11 kB, estimate=529 kB; lsn=0/1D6AFF0, redo lsn=0/1D6AF98
+2026-10-25 19:29:27 +07 LOG:  checkpoint starting: time
+2026-10-25 19:29:27 +07 LOG:  checkpoint complete: wrote 1 buffers (0.0%), wrote 0 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.110 s, sync=0.024 s, total=0.206 s; sync files=1, longest=0.024 s, average=0.024 s; distance=7 kB, estimate=477 kB; lsn=0/1D6CC38, redo lsn=0/1D6CBE0
