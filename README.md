@@ -22,7 +22,8 @@ GRANT USAGE ON SCHEMA public TO qt_app;
 3. Cấp quyền dữ liệu hiện có cho role ứng dụng trong Query Tool:
 
 ```sql
-GRANT SELECT, INSERT, UPDATE, DELETE ON users, drafts, word_templates, documents, document_notes, attachments, qt_sessions TO qt_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON users, drafts, word_templates, documents, document_notes, attachments, qt_sessions, military_ranks, positions TO qt_app;
+GRANT USAGE, SELECT ON SEQUENCE military_ranks_id_seq, positions_id_seq TO qt_app;
 ```
 
 Các lần thay đổi schema sau này chạy bằng tài khoản migration, không chạy ứng dụng với tài khoản `postgres`.
@@ -65,11 +66,12 @@ Mở `http://127.0.0.1:3000`. Endpoint kiểm tra kết nối là `http://127.0.
 ## Cấu trúc gọn
 
 - `public/`: toàn bộ HTML, CSS, JavaScript giao diện và ảnh.
-- Tài khoản quản lý dùng `public/quan-ly.html` để quản lý tài khoản và `public/mau-word.html` để tải lên/quản lý mẫu Word.
+- Tài khoản quản lý dùng `public/quan-ly.html` để tạo, tìm kiếm, sửa tài khoản thành viên và đặt lại mật khẩu; cấp bậc, chức vụ được chọn từ danh mục. Danh sách cấp bậc sắp xếp từ cao xuống thấp (tướng, tá, úy, sĩ, binh). Dùng `public/danh-muc.html` để thêm cấp bậc và chức vụ (chức vụ mới gắn với một trong năm cấp duyệt hiện tại); `public/mau-word.html` để tải lên/quản lý mẫu Word.
 - Người dùng gửi giáo án tại `public/gui-giao-an.html`: nhập tiêu đề, chọn loại giáo án và người nhận, tải lên ít nhất một tệp Word (`.doc`/`.docx`) hoặc PDF. Tệp gốc được lưu và chuyển tiếp nguyên byte, không chuyển đổi định dạng; giới hạn 15 MB mỗi tệp.
+- Nội dung giáo án Quân sự gồm: Pháo binh, Công binh, Bộ binh, Trinh sát, Thông tin, SPG, Cối 60 và Cối 80.
 - Mẫu Word được tải nguyên bản về để hoàn thiện trong Microsoft Word rồi tải lên gửi duyệt. Ứng dụng không còn trình soạn giáo án bằng chữ trên web hoặc mẫu soạn nội dung chữ.
 
-Khi cập nhật phiên bản, chạy `npm.cmd run db:setup` bằng tài khoản migration. Migration file-submission sẽ xóa các bản nháp và mẫu soạn chữ cũ, xóa nội dung chữ khỏi giáo án lịch sử và loại bỏ cột nội dung; lịch sử phê duyệt, ghi chú, tệp đã gửi, tài khoản và mẫu Word được giữ lại. Cấp quyền đọc/ghi bảng `users`, `drafts`, `word_templates`, `documents`, `document_notes`, `attachments` và `qt_sessions` cho role `qt_app`.
+Khi cập nhật phiên bản, chạy `npm.cmd run db:setup` bằng tài khoản migration. Migration file-submission sẽ xóa các bản nháp và mẫu soạn chữ cũ, xóa nội dung chữ khỏi giáo án lịch sử và loại bỏ cột nội dung; lịch sử phê duyệt, ghi chú, tệp đã gửi, tài khoản và mẫu Word được giữ lại. Cấp quyền đọc/ghi bảng `users`, `drafts`, `word_templates`, `documents`, `document_notes`, `attachments`, `qt_sessions`, `military_ranks` và `positions` cho role `qt_app`; cấp quyền dùng sequence `military_ranks_id_seq` và `positions_id_seq`.
 - `server.js`: backend Express API.
 - `schema.sql`, `setup-db.js`, `seed-demo.js`: cấu trúc và thao tác dữ liệu PostgreSQL.
 - `.env`: cấu hình bí mật riêng trên máy, không chia sẻ/commit.
@@ -81,7 +83,8 @@ Khi cập nhật phiên bản, chạy `npm.cmd run db:setup` bằng tài khoản
 - `POST /api/documents/:id/notes`, `POST /api/documents/:id/approve`, `POST /api/documents/:id/reject`
 - `GET|POST /api/drafts`, `DELETE /api/drafts/:id`, `POST /api/drafts/:id/attachments`
 - `GET /api/attachments/:id`
-- `GET|POST /api/management/users` (chỉ quản lý)
+- `GET|POST /api/management/users`, `PUT /api/management/users/:id`, `POST /api/management/users/:id/reset-password` (chỉ quản lý)
+- `GET /api/management/catalogs`, `POST|DELETE /api/management/catalogs/ranks`, `POST|DELETE /api/management/catalogs/positions` (chỉ quản lý)
 - `GET /api/word-templates`, `GET /api/word-templates/:id/download` (tài khoản gửi giáo án)
 - `GET|POST /api/management/word-templates`, `DELETE /api/management/word-templates/:id` (chỉ quản lý)
 

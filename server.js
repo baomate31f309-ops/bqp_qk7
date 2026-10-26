@@ -32,7 +32,7 @@ const roles = new Map([
 	[5, 'Tư lệnh']
 ]);
 const subtypes = {
-	'Quân sự': ['Pháo', 'Công', 'Bộ', 'TT', 'Phòng không'],
+	'Quân sự': ['Pháo binh', 'Công binh', 'Bộ binh', 'Trinh sát', 'Thông tin', 'SPG', 'Cối 60', 'Cối 80'],
 	'Chính trị': [],
 	'Hậu cần kỹ thuật': ['Quân nhu', 'Doanh trại', 'Quân y']
 };
@@ -80,16 +80,31 @@ function publicUser(row) {
 		id: row.id,
 		username: row.username,
 		name: row.name,
+		rank: row.military_rank || '',
 		level: row.level,
-		role: row.is_admin ? 'Quản lý tài khoản' : roles.get(Number(row.level)),
+		role: row.is_admin ? 'Quản lý tài khoản' : row.position_title || roles.get(Number(row.level)),
 		isAdmin: row.is_admin
 	};
+}
+
+function rankSortKey(name) {
+	const normalized = name.normalize('NFD').replace(/\p{Diacritic}/gu, '')
+		.replace(/\u0111/gu, 'd').replace(/\u0110/gu, 'd').toLocaleLowerCase('vi');
+	const group = normalized.endsWith('tuong') ? 0
+		: normalized.endsWith('ta') ? 1
+			: normalized.endsWith('uy') ? 2
+				: normalized.endsWith('si') ? 3
+					: normalized.startsWith('binh ') ? 4 : 5;
+	const order = ['dai', 'thuong', 'trung', 'thieu'];
+	const prefix = order.findIndex(item => normalized.startsWith(item));
+	const enlistedOrder = normalized === 'binh nhat' ? 0 : normalized === 'binh nhi' ? 1 : 2;
+	return [group, group === 4 ? enlistedOrder : prefix < 0 ? order.length : prefix, normalized];
 }
 
 function requireAuth(req, res, next) {
 	if (!req.session.userId) return res.status(401).json({ error: 'Vui lòng đăng nhập.' });
 	pool.query(
-		'SELECT id, username, name, level, is_admin FROM users WHERE id = $1',
+		'SELECT id, username, name, military_rank, position_title, level, is_admin FROM users WHERE id = $1',
 		[req.session.userId]
 	).then(result => {
 		if (!result.rowCount) {
@@ -177,7 +192,7 @@ app.post('/api/auth/login', loginLimiter, asyncRoute(async (req, res, next) => {
 	const username = String(req.body?.username || '').trim().toLocaleLowerCase('vi');
 	const password = String(req.body?.password || '');
 	const result = await pool.query(
-		'SELECT id, username, name, password_hash, level, is_admin FROM users WHERE LOWER(username) = $1',
+		'SELECT id, username, name, password_hash, military_rank, position_title, level, is_admin FROM users WHERE LOWER(username) = $1',
 		[username]
 	);
 	const user = result.rows[0];
@@ -234,7 +249,7 @@ app.post('/api/auth/logout', requireAuth, (req, res, next) => {
 
 app.get('/api/recipients', requireAuth, requireBusinessUser, asyncRoute(async (req, res) => {
 	const result = await pool.query(
-		`SELECT id, username, name, level, is_admin FROM users
+		`SELECT id, username, name, military_rank, position_title, level, is_admin FROM users
 		 WHERE is_admin = FALSE AND id <> $1 AND level IN ($2, $3)
 		 ORDER BY level DESC, name`,
 		[req.user.id, req.user.level, req.user.level + 1]
@@ -246,8 +261,8 @@ app.get('/api/documents', requireAuth, requireBusinessUser, asyncRoute(async (re
 	const result = await pool.query(
 		`SELECT d.id, d.title, d.course_type AS "courseType",
 		        d.course_subtype AS "courseSubtype", d.status, d.sent_at AS "sentAt",
-		        sender.id AS "senderId", sender.name AS sender, sender.level AS "senderLevel",
-		        recipient.id AS "recipientId", recipient.name AS recipient, recipient.level AS "recipientLevel",
+		        sender.id AS "senderId", sender.name AS sender, sender.military_rank AS "senderRank", sender.position_title AS "senderPosition", sender.level AS "senderLevel",
+		        recipient.id AS "recipientId", recipient.name AS recipient, recipient.military_rank AS "recipientRank", recipient.position_title AS "recipientPosition", recipient.level AS "recipientLevel",
 		        COALESCE((SELECT json_agg(json_build_object(
 		            'id', n.id, 'author', author.name, 'text', n.text, 'at', n.created_at
 		        ) ORDER BY n.created_at) FROM document_notes n
@@ -265,8 +280,8 @@ app.get('/api/documents', requireAuth, requireBusinessUser, asyncRoute(async (re
 	res.json({ documents: result.rows.map(row => ({
 		...row,
 		attachments: row.attachments.map(file => ({ ...file, name: normalizeFileName(file.name) })),
-		senderRole: roles.get(Number(row.senderLevel)),
-		recipientRole: roles.get(Number(row.recipientLevel))
+		senderRole: [row.senderRank, row.senderPosition || roles.get(Number(row.senderLevel))].filter(Boolean).join(' · '),
+		recipientRole: [row.recipientRank, row.recipientPosition || roles.get(Number(row.recipientLevel))].filter(Boolean).join(' · ')
 	})) });
 }));
 
@@ -502,11 +517,72 @@ app.get('/api/attachments/:id', requireAuth, requireBusinessUser, asyncRoute(asy
 
 app.get('/api/management/users', requireAuth, requireAdmin, asyncRoute(async (_req, res) => {
 	const result = await pool.query(
-		`SELECT u.id, u.username, u.name, u.level, u.is_admin, m.name AS manager
+		`SELECT u.id, u.username, u.name, u.military_rank, u.position_title, u.level, u.is_admin, u.manager_id AS "managerId",
+		        m.name AS "managerName", m.military_rank AS "managerRank",
+		        m.position_title AS "managerPosition", m.level AS "managerLevel"
 		 FROM users u LEFT JOIN users m ON m.id = u.manager_id
 		 ORDER BY u.is_admin DESC, u.level DESC NULLS LAST, u.name`
 	);
-	res.json({ users: result.rows.map(row => ({ ...publicUser(row), manager: row.manager || 'Bộ Quốc phòng' })) });
+	res.json({ users: result.rows.map(row => ({
+		...publicUser(row),
+		manager: row.managerName
+			? [row.managerName, row.managerRank, row.managerPosition || roles.get(Number(row.managerLevel))].filter(Boolean).join(' · ')
+			: 'Bộ Quốc phòng'
+	})) });
+}));
+
+app.get('/api/management/catalogs', requireAuth, requireAdmin, asyncRoute(async (_req, res) => {
+	const [ranks, positions] = await Promise.all([
+		pool.query('SELECT id, name FROM military_ranks'),
+		pool.query('SELECT id, name, level FROM positions ORDER BY level, name')
+	]);
+	ranks.rows.sort((a, b) => {
+		const aKey = rankSortKey(a.name);
+		const bKey = rankSortKey(b.name);
+		return aKey[0] - bKey[0] || aKey[1] - bKey[1] || aKey[2].localeCompare(bKey[2], 'vi');
+	});
+	res.json({ ranks: ranks.rows, positions: positions.rows });
+}));
+
+app.post('/api/management/catalogs/ranks', requireAuth, requireAdmin, asyncRoute(async (req, res) => {
+	const name = String(req.body?.name || '').trim();
+	if (!name || name.length > 100) return res.status(400).json({ error: 'Tên cấp bậc là bắt buộc và không quá 100 ký tự.' });
+	const result = await pool.query(
+		'INSERT INTO military_ranks (name) VALUES ($1) RETURNING id, name',
+		[name]
+	);
+	res.status(201).json({ rank: result.rows[0] });
+}));
+
+app.delete('/api/management/catalogs/ranks/:id', requireAuth, requireAdmin, asyncRoute(async (req, res) => {
+	const rank = await pool.query('SELECT name FROM military_ranks WHERE id = $1', [req.params.id]);
+	if (!rank.rowCount) return res.status(404).json({ error: 'Không tìm thấy cấp bậc.' });
+	const used = await pool.query('SELECT 1 FROM users WHERE military_rank = $1 LIMIT 1', [rank.rows[0].name]);
+	if (used.rowCount) return res.status(409).json({ error: 'Cấp bậc đang được sử dụng bởi tài khoản thành viên.' });
+	await pool.query('DELETE FROM military_ranks WHERE id = $1', [req.params.id]);
+	res.status(204).end();
+}));
+
+app.post('/api/management/catalogs/positions', requireAuth, requireAdmin, asyncRoute(async (req, res) => {
+	const name = String(req.body?.name || '').trim();
+	const level = Number(req.body?.level);
+	if (!name || name.length > 100 || !Number.isInteger(level) || !roles.has(level)) {
+		return res.status(400).json({ error: 'Tên chức vụ và cấp phân quyền hợp lệ là bắt buộc.' });
+	}
+	const result = await pool.query(
+		'INSERT INTO positions (name, level) VALUES ($1, $2) RETURNING id, name, level',
+		[name, level]
+	);
+	res.status(201).json({ position: result.rows[0] });
+}));
+
+app.delete('/api/management/catalogs/positions/:id', requireAuth, requireAdmin, asyncRoute(async (req, res) => {
+	const position = await pool.query('SELECT name FROM positions WHERE id = $1', [req.params.id]);
+	if (!position.rowCount) return res.status(404).json({ error: 'Không tìm thấy chức vụ.' });
+	const used = await pool.query('SELECT 1 FROM users WHERE position_title = $1 LIMIT 1', [position.rows[0].name]);
+	if (used.rowCount) return res.status(409).json({ error: 'Chức vụ đang được sử dụng bởi tài khoản thành viên.' });
+	await pool.query('DELETE FROM positions WHERE id = $1', [req.params.id]);
+	res.status(204).end();
 }));
 
 app.get('/api/management/word-templates', requireAuth, requireAdmin, asyncRoute(async (_req, res) => {
@@ -560,10 +636,13 @@ app.delete('/api/management/word-templates/:id', requireAuth, requireAdmin, asyn
 }));
 
 app.post('/api/management/users', requireAuth, requireAdmin, asyncRoute(async (req, res) => {
-	const { username, password, name, level, managerId } = req.body || {};
-	const selectedLevel = Number(level);
-	if (!String(username || '').trim() || !String(name || '').trim() || !Number.isInteger(selectedLevel) || !roles.has(selectedLevel)) {
-		return res.status(400).json({ error: 'Tên tài khoản, họ tên và cấp bậc hợp lệ là bắt buộc.' });
+	const { username, password, name, rank, positionTitle, managerId } = req.body || {};
+	const position = await pool.query('SELECT level FROM positions WHERE name = $1', [String(positionTitle || '').trim()]);
+	const selectedLevel = position.rowCount ? Number(position.rows[0].level) : 0;
+	const selectedRank = String(rank || '').trim();
+	const rankExists = await pool.query('SELECT 1 FROM military_ranks WHERE name = $1', [selectedRank]);
+	if (!String(username || '').trim() || !String(name || '').trim() || !rankExists.rowCount || !position.rowCount) {
+		return res.status(400).json({ error: 'Tên tài khoản, họ tên, cấp bậc và chức vụ trong danh sách là bắt buộc.' });
 	}
 	if (!/^\d{6,}$/.test(String(password || ''))) {
 		return res.status(400).json({ error: 'Mật khẩu phải có ít nhất 6 chữ số và chỉ chứa chữ số.' });
@@ -576,16 +655,69 @@ app.post('/api/management/users', requireAuth, requireAdmin, asyncRoute(async (r
 		}
 	}
 	const result = await pool.query(
-		`INSERT INTO users (username, name, password_hash, level, manager_id)
-		 VALUES ($1, $2, $3, $4, $5)
-		 RETURNING id, username, name, level, is_admin`,
-		[String(username).trim().toLocaleLowerCase('vi'), String(name).trim(), await bcrypt.hash(password, 12), selectedLevel, managerId || null]
+		`INSERT INTO users (username, name, password_hash, military_rank, position_title, level, manager_id)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7)
+		 RETURNING id, username, name, military_rank, position_title, level, is_admin`,
+		[String(username).trim().toLocaleLowerCase('vi'), String(name).trim(), await bcrypt.hash(password, 12), selectedRank, String(positionTitle).trim(), selectedLevel, managerId || null]
 	);
 	res.status(201).json({ user: publicUser(result.rows[0]) });
 }));
 
+app.put('/api/management/users/:id', requireAuth, requireAdmin, asyncRoute(async (req, res) => {
+	const { username, name, rank, positionTitle, managerId } = req.body || {};
+	const position = await pool.query('SELECT level FROM positions WHERE name = $1', [String(positionTitle || '').trim()]);
+	const selectedLevel = position.rowCount ? Number(position.rows[0].level) : 0;
+	const normalizedUsername = String(username || '').trim().toLocaleLowerCase('vi');
+	const selectedName = String(name || '').trim();
+	const selectedRank = String(rank || '').trim();
+	const rankExists = await pool.query('SELECT 1 FROM military_ranks WHERE name = $1', [selectedRank]);
+	if (!normalizedUsername || !selectedName || !rankExists.rowCount || !position.rowCount) {
+		return res.status(400).json({ error: 'Tên tài khoản, họ tên, cấp bậc và chức vụ trong danh sách là bắt buộc.' });
+	}
+	if (selectedLevel < 5 && !managerId) return res.status(400).json({ error: 'Cần chọn chỉ huy trực tiếp.' });
+	if (managerId) {
+		if (managerId === req.params.id) return res.status(400).json({ error: 'Không thể chọn chính thành viên làm chỉ huy.' });
+		const manager = await pool.query('SELECT level, is_admin FROM users WHERE id = $1', [managerId]);
+		if (!manager.rowCount || manager.rows[0].is_admin || Number(manager.rows[0].level) !== selectedLevel + 1) {
+			return res.status(400).json({ error: 'Chỉ huy trực tiếp phải cao hơn đúng một cấp.' });
+		}
+	}
+	const member = await pool.query('SELECT id, is_admin FROM users WHERE id = $1', [req.params.id]);
+	if (!member.rowCount || member.rows[0].is_admin) {
+		return res.status(404).json({ error: 'Không tìm thấy tài khoản thành viên.' });
+	}
+	const incompatibleSubordinates = await pool.query(
+		'SELECT 1 FROM users WHERE manager_id = $1 AND level <> $2 LIMIT 1',
+		[req.params.id, selectedLevel - 1]
+	);
+	if (incompatibleSubordinates.rowCount) {
+		return res.status(409).json({ error: 'Không thể đổi chức vụ vì có cấp dưới sẽ không còn đúng cấp chỉ huy. Hãy chuyển cấp dưới sang chỉ huy khác trước.' });
+	}
+	const result = await pool.query(
+		`UPDATE users
+		 SET username = $1, name = $2, military_rank = $3, position_title = $4, level = $5, manager_id = $6
+		 WHERE id = $7 AND is_admin = FALSE
+		 RETURNING id, username, name, military_rank, position_title, level, is_admin`,
+		[normalizedUsername, selectedName, selectedRank, String(positionTitle).trim(), selectedLevel, managerId || null, req.params.id]
+	);
+	res.json({ user: publicUser(result.rows[0]) });
+}));
+
+app.post('/api/management/users/:id/reset-password', requireAuth, requireAdmin, asyncRoute(async (req, res) => {
+	const password = String(req.body?.password || '');
+	if (!/^\d{6,}$/.test(password)) {
+		return res.status(400).json({ error: 'Mật khẩu phải có ít nhất 6 chữ số và chỉ chứa chữ số.' });
+	}
+	const result = await pool.query(
+		'UPDATE users SET password_hash = $1 WHERE id = $2 AND is_admin = FALSE',
+		[await bcrypt.hash(password, 12), req.params.id]
+	);
+	if (!result.rowCount) return res.status(404).json({ error: 'Không tìm thấy tài khoản thành viên.' });
+	res.status(204).end();
+}));
+
 const staticFiles = new Set([
-	'index.html', 'dashboard.html', 'quan-ly.html', 'mau-word.html', 'gui-giao-an.html',
+	'index.html', 'dashboard.html', 'quan-ly.html', 'danh-muc.html', 'mau-word.html', 'gui-giao-an.html',
 	'app.js', 'navigation.html', 'style.css', 'Vietnam_Ministry_of_National_Defence_emblem.svg.webp'
 ]);
 app.get('/', (_req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
@@ -595,14 +727,18 @@ app.get('/:file', asyncRoute(async (req, res, next) => {
 }));
 
 app.use('/api', (_req, res) => res.status(404).json({ error: 'Không tìm thấy API.' }));
-app.use((error, _req, res, _next) => {
+app.use((error, req, res, _next) => {
 	console.error(error);
 	if (error.type === 'entity.parse.failed') return res.status(400).json({ error: 'Dữ liệu JSON không hợp lệ.' });
 	if (error.type === 'entity.too.large') return res.status(413).json({ error: 'Nội dung yêu cầu vượt quá giới hạn.' });
 	if (error instanceof multer.MulterError) {
 		return res.status(400).json({ error: error.code === 'LIMIT_FILE_SIZE' ? 'Mỗi tệp tối đa 15 MB.' : 'Số lượng hoặc kích thước tệp không hợp lệ.' });
 	}
-	if (error.code === '23505') return res.status(409).json({ error: 'Tên tài khoản đã tồn tại.' });
+	if (error.code === '23505') {
+		if (req.path.includes('/management/catalogs/ranks')) return res.status(409).json({ error: 'Cấp bậc này đã có trong danh sách.' });
+		if (req.path.includes('/management/catalogs/positions')) return res.status(409).json({ error: 'Chức vụ này đã có trong danh sách.' });
+		return res.status(409).json({ error: 'Tên tài khoản đã tồn tại.' });
+	}
 	if (error.code === '23503' || error.code === '22P02') return res.status(400).json({ error: 'Dữ liệu tham chiếu không hợp lệ.' });
 	return res.status(500).json({ error: 'Máy chủ gặp lỗi. Hãy kiểm tra log backend.' });
 });
@@ -614,9 +750,10 @@ async function start() {
 	}
 	await pool.query('SELECT 1');
 	const schema = await pool.query(
-		"SELECT to_regclass('public.users') AS users, to_regclass('public.qt_sessions') AS sessions, to_regclass('public.word_templates') AS word_templates"
+		"SELECT to_regclass('public.users') AS users, to_regclass('public.qt_sessions') AS sessions, to_regclass('public.word_templates') AS word_templates, to_regclass('public.military_ranks') AS military_ranks, to_regclass('public.positions') AS positions"
 	);
-	if (!schema.rows[0].users || !schema.rows[0].sessions || !schema.rows[0].word_templates) {
+	if (!schema.rows[0].users || !schema.rows[0].sessions || !schema.rows[0].word_templates
+		|| !schema.rows[0].military_ranks || !schema.rows[0].positions) {
 		throw new Error('Chưa có schema. Hãy chạy npm run db:setup bằng tài khoản migration trước.');
 	}
 	app.listen(PORT, HOST, () => console.log(`QT API sẵn sàng tại http://${HOST}:${PORT}`));

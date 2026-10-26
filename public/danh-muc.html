@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="vi">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Quản lý chức vụ, cấp bậc | Bộ Quốc Phòng</title>
+	<link rel="stylesheet" href="style.css">
+	<script defer src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+	<script defer src="app.js"></script>
+</head>
+<body data-page="catalogs" hidden>
+	<div class="shell">
+		<aside class="sidebar" data-sidebar-placeholder></aside>
+		<main class="main">
+			<header class="topbar" data-topbar-placeholder></header>
+			<div class="page">
+				<div class="heading"><div><p class="eyebrow">Khu vực dành riêng cho quản lý</p><h1>Quản lý danh mục thành viên</h1><p class="subtitle">Thêm cấp bậc và chức vụ để sử dụng trong biểu mẫu tài khoản. Mỗi chức vụ thuộc một trong năm cấp duyệt hiện tại.</p></div></div>
+				<div class="management-grid">
+					<section class="panel">
+						<div class="panel-head"><div><h2>Thêm cấp bậc</h2><p>Cấp bậc mới sẽ xuất hiện khi tạo hoặc sửa thành viên.</p></div></div>
+						<form class="form-grid" id="rank-form">
+							<label for="rank-name">Tên cấp bậc<input class="field-input" id="rank-name" maxlength="100" required placeholder="Ví dụ: Đại úy"></label>
+							<div class="form-actions"><button class="button primary" type="submit">Thêm cấp bậc</button></div>
+						</form>
+						<div class="table-wrap"><table><thead><tr><th>Cấp bậc</th><th>Thao tác</th></tr></thead><tbody id="rank-list"></tbody></table></div>
+					</section>
+					<section class="panel">
+						<div class="panel-head"><div><h2>Thêm chức vụ</h2><p>Chọn cấp duyệt tương ứng để giữ nguyên luồng phê duyệt.</p></div></div>
+						<form class="form-grid" id="position-form">
+							<label for="position-name">Tên chức vụ<input class="field-input" id="position-name" maxlength="100" required placeholder="Ví dụ: Trợ lý"></label>
+							<label for="position-level">Cấp duyệt<select class="field-select" id="position-level" required>
+								<option value="1">Cấp 1 · Đại đội trưởng</option>
+								<option value="2">Cấp 2 · Tiểu đoàn trưởng</option>
+								<option value="3">Cấp 3 · Trung đoàn trưởng</option>
+								<option value="4">Cấp 4 · Sư đoàn trưởng</option>
+								<option value="5">Cấp 5 · Tư lệnh</option>
+							</select></label>
+							<div class="form-actions"><button class="button primary" type="submit">Thêm chức vụ</button></div>
+						</form>
+						<div class="table-wrap"><table><thead><tr><th>Chức vụ</th><th>Cấp duyệt</th><th>Thao tác</th></tr></thead><tbody id="position-list"></tbody></table></div>
+					</section>
+				</div>
+				<p class="field-hint" style="margin-top:12px">Không thể xóa cấp bậc hoặc chức vụ đang được sử dụng bởi thành viên.</p>
+			</div>
+		</main>
+	</div>
+</body>
+</html>

@@ -6,7 +6,7 @@ const ROLES = new Map([
 	[5, 'Tư lệnh']
 ]);
 const SUBTYPES = {
-	'Quân sự': ['Pháo', 'Công', 'Bộ', 'TT', 'Phòng không'],
+	'Quân sự': ['Pháo binh', 'Công binh', 'Bộ binh', 'Trinh sát', 'Thông tin', 'SPG', 'Cối 60', 'Cối 80'],
 	'Chính trị': [],
 	'Hậu cần kỹ thuật': ['Quân nhu', 'Doanh trại', 'Quân y']
 };
@@ -58,6 +58,7 @@ async function loadNavigation(page) {
 		dashboard: 'Dashboard',
 		submission: 'Gửi giáo án',
 		management: 'Quản lý tài khoản',
+		catalogs: 'Quản lý chức vụ, cấp bậc',
 		'word-templates': 'Upload mẫu Word'
 	};
 	topbar.querySelector('[data-topbar-title]').textContent = pageTitles[page];
@@ -371,7 +372,7 @@ async function setupFileSubmission() {
 	async function updateRecipients(selectedId = '') {
 		const result = await api('/api/recipients');
 		recipientSelect.replaceChildren(new Option('-- Chọn người nhận --', ''));
-		result.recipients.forEach(user => recipientSelect.add(new Option(`${user.name} · ${user.role}`, user.id)));
+		result.recipients.forEach(user => recipientSelect.add(new Option(`${user.name} · ${[user.rank, user.role].filter(Boolean).join(' · ')}`, user.id)));
 		if (selectedId && result.recipients.some(user => user.id === selectedId)) recipientSelect.value = selectedId;
 		recipientSelect.disabled = result.recipients.length === 0;
 	}
@@ -651,9 +652,22 @@ async function setupFileSubmission() {
 
 async function setupManagement() {
 	const list = document.getElementById('member-list');
+	const memberSearch = document.getElementById('member-search');
+	const memberCount = document.getElementById('member-count');
 	const form = document.getElementById('member-form');
 	const roleSelect = document.getElementById('member-role');
 	const managerSelect = document.getElementById('member-manager');
+	const editMemberDialog = document.getElementById('edit-member-dialog');
+	const editMemberForm = document.getElementById('edit-member-form');
+	const editMemberRole = document.getElementById('edit-member-role');
+	const editMemberManager = document.getElementById('edit-member-manager');
+	const editMemberError = document.getElementById('edit-member-error');
+	const saveMemberButton = document.getElementById('save-member-button');
+	const resetPasswordDialog = document.getElementById('reset-password-dialog');
+	const resetPasswordForm = document.getElementById('reset-password-form');
+	const resetPasswordInput = document.getElementById('reset-password-input');
+	const resetPasswordError = document.getElementById('reset-password-error');
+	const savePasswordButton = document.getElementById('save-password-button');
 	const wordTemplateForm = document.getElementById('word-template-form');
 	const wordTemplateCourseType = document.getElementById('word-template-course-type');
 	const wordTemplateCourseSubtype = document.getElementById('word-template-course-subtype');
@@ -667,6 +681,9 @@ async function setupManagement() {
 	let pendingTemplateDelete = null;
 	let users = [];
 	let wordTemplates = [];
+	let catalogs = { ranks: [], positions: [] };
+	let editingUser = null;
+	let resettingPasswordUser = null;
 
 	function updateWordTemplateSubtypes(selected = '') {
 		const options = SUBTYPES[wordTemplateCourseType.value] || [];
@@ -676,19 +693,70 @@ async function setupManagement() {
 		if (options.includes(selected)) wordTemplateCourseSubtype.value = selected;
 	}
 
+	function selectedPositionLevel(select) {
+		return Number(select.selectedOptions[0]?.dataset.level);
+	}
+
+	function populatePositionSelect(select, selectedName = '') {
+		select.replaceChildren(new Option('-- Chọn chức vụ --', ''));
+		catalogs.positions.forEach(position => {
+			const option = new Option(position.name, position.name);
+			option.dataset.level = position.level;
+			select.add(option);
+		});
+		if (selectedName && [...select.options].some(option => option.value === selectedName)) {
+			select.value = selectedName;
+		}
+	}
+
+	function populateRankSelect(select, selectedName = '') {
+		select.replaceChildren(new Option('-- Chọn cấp bậc --', ''));
+		catalogs.ranks.forEach(rank => select.add(new Option(rank.name, rank.name)));
+		if (selectedName && ![...select.options].some(option => option.value === selectedName)) {
+			select.add(new Option(selectedName, selectedName));
+		}
+		if (selectedName) select.value = selectedName;
+	}
+
 	function updateManagers() {
-		const level = Number(roleSelect.value);
+		const level = selectedPositionLevel(roleSelect);
 		managerSelect.replaceChildren(new Option(level === 5 ? 'Bộ Quốc phòng' : '-- Chọn chỉ huy trực tiếp --', ''));
 		users.filter(user => !user.isAdmin && Number(user.level) === level + 1)
-			.forEach(user => managerSelect.add(new Option(`${user.name} · ${user.role}`, user.id)));
+			.forEach(user => managerSelect.add(new Option(`${user.name} · ${[user.rank, user.role].filter(Boolean).join(' · ')}`, user.id)));
 		managerSelect.required = level < 5;
+	}
+
+	function updateEditManagers(selectedId = '') {
+		const level = selectedPositionLevel(editMemberRole);
+		editMemberManager.replaceChildren(new Option(level === 5 ? 'Bộ Quốc phòng' : '-- Chọn chỉ huy trực tiếp --', ''));
+		users.filter(user => !user.isAdmin && user.id !== editingUser?.id && Number(user.level) === level + 1)
+			.forEach(user => editMemberManager.add(new Option(`${user.name} · ${[user.rank, user.role].filter(Boolean).join(' · ')}`, user.id)));
+		editMemberManager.required = level < 5;
+		if (selectedId && [...editMemberManager.options].some(option => option.value === selectedId)) {
+			editMemberManager.value = selectedId;
+		}
+	}
+
+	function normalizeSearch(value) {
+		return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLocaleLowerCase('vi').trim();
 	}
 
 	function renderUsers() {
 		list.replaceChildren();
-		users.filter(user => !user.isAdmin).forEach(user => {
+		const query = normalizeSearch(memberSearch.value);
+		const members = users.filter(user => !user.isAdmin);
+		const filtered = members.filter(user => !query || normalizeSearch([
+			user.name, user.username, user.rank, user.role, user.manager
+		].join(' ')).includes(query));
+		memberCount.textContent = query ? `Hiển thị ${filtered.length}/${members.length} thành viên` : `${members.length} thành viên`;
+		if (!filtered.length) {
 			const row = document.createElement('tr');
-			row.innerHTML = `<td><strong>${escapeHtml(user.name)}</strong></td><td>${escapeHtml(user.username)}</td><td>${escapeHtml(user.role)}</td><td>${escapeHtml(user.manager || 'Bộ Quốc phòng')}</td>`;
+			row.innerHTML = `<td class="empty-row" colspan="6">${query ? 'Không tìm thấy tài khoản phù hợp.' : 'Chưa có tài khoản thành viên.'}</td>`;
+			list.append(row);
+		}
+		filtered.forEach(user => {
+			const row = document.createElement('tr');
+			row.innerHTML = `<td><strong>${escapeHtml(user.name)}</strong></td><td>${escapeHtml(user.username)}</td><td>${escapeHtml(user.rank || '—')}</td><td>${escapeHtml(user.role)}</td><td>${escapeHtml(user.manager || 'Bộ Quốc phòng')}</td><td><div class="member-actions"><button class="button small" type="button" data-member-action="edit" data-user-id="${escapeHtml(user.id)}">Sửa</button><button class="button small" type="button" data-member-action="reset-password" data-user-id="${escapeHtml(user.id)}">Đặt lại mật khẩu</button></div></td>`;
 			list.append(row);
 		});
 		[1, 2, 3, 4, 5].forEach(level => {
@@ -746,7 +814,88 @@ async function setupManagement() {
 
 	const page = document.body.dataset.page;
 	if (page === 'management') {
+		catalogs = await api('/api/management/catalogs');
+		populateRankSelect(document.getElementById('member-rank'));
+		populatePositionSelect(roleSelect);
+		populateRankSelect(document.getElementById('edit-member-rank'));
+		populatePositionSelect(editMemberRole);
 		roleSelect.addEventListener('change', updateManagers);
+		memberSearch.addEventListener('input', renderUsers);
+		editMemberRole.addEventListener('change', () => updateEditManagers());
+		document.querySelectorAll('[data-close-dialog]').forEach(button => {
+			button.addEventListener('click', () => document.getElementById(button.dataset.closeDialog).close());
+		});
+		list.addEventListener('click', event => {
+			const button = event.target.closest('button[data-member-action]');
+			if (!button) return;
+			const user = users.find(item => item.id === button.dataset.userId && !item.isAdmin);
+			if (!user) return;
+			if (button.dataset.memberAction === 'edit') {
+				editingUser = user;
+				document.getElementById('edit-member-name').value = user.name;
+				document.getElementById('edit-member-username').value = user.username;
+				populateRankSelect(document.getElementById('edit-member-rank'), user.rank || '');
+				populatePositionSelect(editMemberRole, user.role);
+				editMemberError.hidden = true;
+				updateEditManagers(user.managerId || '');
+				editMemberDialog.showModal();
+				activateIcons(editMemberDialog);
+				document.getElementById('edit-member-name').focus();
+				return;
+			}
+			if (button.dataset.memberAction === 'reset-password') {
+				resettingPasswordUser = user;
+				document.getElementById('reset-password-member').textContent = `${user.name} (${user.username})`;
+				resetPasswordForm.reset();
+				resetPasswordError.hidden = true;
+				resetPasswordDialog.showModal();
+				activateIcons(resetPasswordDialog);
+				resetPasswordInput.focus();
+			}
+		});
+		editMemberForm.addEventListener('submit', async event => {
+			event.preventDefault();
+			if (!editingUser) return;
+			saveMemberButton.disabled = true;
+			try {
+				await api(`/api/management/users/${encodeURIComponent(editingUser.id)}`, {
+					method: 'PUT',
+					body: JSON.stringify({
+						name: document.getElementById('edit-member-name').value.trim(),
+						username: document.getElementById('edit-member-username').value.trim(),
+						rank: document.getElementById('edit-member-rank').value.trim(),
+						positionTitle: editMemberRole.value,
+						managerId: editMemberManager.value || null
+					})
+				});
+				editMemberDialog.close();
+				showToast('Đã cập nhật thông tin thành viên.', 'success');
+				await reloadUsers();
+			} catch (error) {
+				editMemberError.textContent = error.message;
+				editMemberError.hidden = false;
+			} finally {
+				saveMemberButton.disabled = false;
+			}
+		});
+		resetPasswordForm.addEventListener('submit', async event => {
+			event.preventDefault();
+			if (!resettingPasswordUser) return;
+			savePasswordButton.disabled = true;
+			try {
+				await api(`/api/management/users/${encodeURIComponent(resettingPasswordUser.id)}/reset-password`, {
+					method: 'POST',
+					body: JSON.stringify({ password: resetPasswordInput.value })
+				});
+				resetPasswordDialog.close();
+				showToast(`Đã đặt lại mật khẩu cho ${resettingPasswordUser.name}.`, 'success');
+			} catch (error) {
+				resetPasswordError.textContent = error.message;
+				resetPasswordError.hidden = false;
+			} finally {
+				savePasswordButton.disabled = false;
+			}
+		});
 		form.addEventListener('submit', async event => {
 			event.preventDefault();
 			try {
@@ -756,12 +905,14 @@ async function setupManagement() {
 						name: document.getElementById('member-name').value.trim(),
 						username: document.getElementById('member-username').value.trim(),
 						password: document.getElementById('member-password').value,
-						level: Number(roleSelect.value),
+						rank: document.getElementById('member-rank').value.trim(),
+						positionTitle: roleSelect.value,
 						managerId: managerSelect.value || null
 					})
 				});
 				form.reset();
-				roleSelect.value = '1';
+				roleSelect.value = '';
+				updateManagers();
 				showToast('Đã tạo tài khoản thành viên.', 'success');
 				await reloadUsers();
 			} catch (error) {
@@ -836,6 +987,100 @@ async function setupManagement() {
 	await reloadWordTemplates();
 }
 
+async function setupCatalogManagement() {
+	const rankForm = document.getElementById('rank-form');
+	const rankList = document.getElementById('rank-list');
+	const positionForm = document.getElementById('position-form');
+	const positionList = document.getElementById('position-list');
+	const levels = new Map([
+		[1, 'Đại đội trưởng'],
+		[2, 'Tiểu đoàn trưởng'],
+		[3, 'Trung đoàn trưởng'],
+		[4, 'Sư đoàn trưởng'],
+		[5, 'Tư lệnh']
+	]);
+	let catalogs = { ranks: [], positions: [] };
+
+	function renderCatalogs() {
+		rankList.replaceChildren();
+		if (!catalogs.ranks.length) {
+			rankList.innerHTML = '<tr><td class="empty-row" colspan="2">Chưa có cấp bậc.</td></tr>';
+		}
+		catalogs.ranks.forEach(rank => {
+			const row = document.createElement('tr');
+			row.innerHTML = `<td>${escapeHtml(rank.name)}</td><td><button class="button small danger" type="button" data-catalog-type="ranks" data-catalog-id="${escapeHtml(rank.id)}">Xóa</button></td>`;
+			rankList.append(row);
+		});
+
+		positionList.replaceChildren();
+		if (!catalogs.positions.length) {
+			positionList.innerHTML = '<tr><td class="empty-row" colspan="3">Chưa có chức vụ.</td></tr>';
+		}
+		catalogs.positions.forEach(position => {
+			const row = document.createElement('tr');
+			row.innerHTML = `<td>${escapeHtml(position.name)}</td><td>Cấp ${Number(position.level)} · ${escapeHtml(levels.get(Number(position.level)))}</td><td><button class="button small danger" type="button" data-catalog-type="positions" data-catalog-id="${escapeHtml(position.id)}">Xóa</button></td>`;
+			positionList.append(row);
+		});
+	}
+
+	async function reloadCatalogs() {
+		catalogs = await api('/api/management/catalogs');
+		renderCatalogs();
+	}
+
+	rankForm.addEventListener('submit', async event => {
+		event.preventDefault();
+		const name = document.getElementById('rank-name').value.trim();
+		try {
+			await api('/api/management/catalogs/ranks', {
+				method: 'POST',
+				body: JSON.stringify({ name })
+			});
+			rankForm.reset();
+			showToast('Đã thêm cấp bậc.', 'success');
+			await reloadCatalogs();
+		} catch (error) {
+			showToast(error.message);
+		}
+	});
+
+	positionForm.addEventListener('submit', async event => {
+		event.preventDefault();
+		const name = document.getElementById('position-name').value.trim();
+		const level = Number(document.getElementById('position-level').value);
+		try {
+			await api('/api/management/catalogs/positions', {
+				method: 'POST',
+				body: JSON.stringify({ name, level })
+			});
+			positionForm.reset();
+			showToast('Đã thêm chức vụ.', 'success');
+			await reloadCatalogs();
+		} catch (error) {
+			showToast(error.message);
+		}
+	});
+
+	document.addEventListener('click', async event => {
+		const button = event.target.closest('button[data-catalog-type][data-catalog-id]');
+		if (!button) return;
+		const { catalogType, catalogId } = button.dataset;
+		if (!window.confirm('Bạn có chắc muốn xóa mục này khỏi danh sách?')) return;
+		button.disabled = true;
+		try {
+			await api(`/api/management/catalogs/${catalogType}/${encodeURIComponent(catalogId)}`, { method: 'DELETE' });
+			showToast('Đã xóa mục khỏi danh sách.', 'success');
+			await reloadCatalogs();
+		} catch (error) {
+			showToast(error.message);
+		} finally {
+			button.disabled = false;
+		}
+	});
+
+	await reloadCatalogs();
+}
+
 async function setupLogin() {
 	const form = document.getElementById('login-form');
 	try {
@@ -904,7 +1149,7 @@ async function bootstrap() {
 	}
 	try {
 		currentUser = (await api('/api/auth/me')).user;
-		const isAdminPage = ['management', 'word-templates'].includes(page);
+		const isAdminPage = ['management', 'catalogs', 'word-templates'].includes(page);
 		if (currentUser.isAdmin && !isAdminPage) {
 			window.location.replace('quan-ly.html');
 			return;
@@ -920,7 +1165,8 @@ async function bootstrap() {
 		document.querySelector('[data-topbar-action="dashboard"]').hidden = page !== 'submission';
 		document.querySelectorAll('.user-copy').forEach(copy => {
 			copy.querySelector('strong').textContent = currentUser.name;
-			copy.querySelector('span').textContent = currentUser.role || ROLES.get(Number(currentUser.level));
+			copy.querySelector('span').textContent = [currentUser.rank, currentUser.role || ROLES.get(Number(currentUser.level))]
+				.filter(Boolean).join(' · ');
 		});
 		document.querySelectorAll('.avatar').forEach(avatar => {
 			avatar.textContent = currentUser.name.split(/\s+/).slice(-2).map(part => part[0]).join('');
@@ -928,6 +1174,7 @@ async function bootstrap() {
 		if (page === 'dashboard') await setupDashboard();
 		else if (page === 'submission') await setupFileSubmission();
 		else if (['management', 'word-templates'].includes(page)) await setupManagement();
+		else if (page === 'catalogs') await setupCatalogManagement();
 		document.body.hidden = false;
 		activateIcons();
 	} catch (error) {
