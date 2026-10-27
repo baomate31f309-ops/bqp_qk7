@@ -5,12 +5,50 @@ const ROLES = new Map([
 	[4, 'Sư đoàn trưởng'],
 	[5, 'Tư lệnh']
 ]);
+let deferredInstallPrompt = null;
 const SUBTYPES = {
 	'Quân sự': ['Pháo binh', 'Công binh', 'Bộ binh', 'Trinh sát', 'Thông tin', 'SPG', 'Cối 60', 'Cối 80'],
 	'Chính trị': [],
 	'Hậu cần kỹ thuật': ['Quân nhu', 'Doanh trại', 'Quân y']
 };
 let currentUser;
+
+function updateInstallButtons(visible) {
+	document.querySelectorAll('[data-install-app]').forEach(button => { button.hidden = !visible; });
+}
+
+window.addEventListener('beforeinstallprompt', event => {
+	event.preventDefault();
+	deferredInstallPrompt = event;
+	updateInstallButtons(true);
+});
+
+window.addEventListener('appinstalled', () => {
+	deferredInstallPrompt = null;
+	updateInstallButtons(false);
+});
+
+document.addEventListener('click', async event => {
+	const button = event.target.closest('[data-install-app]');
+	if (!button || !deferredInstallPrompt) return;
+	button.disabled = true;
+	try {
+		await deferredInstallPrompt.prompt();
+		await deferredInstallPrompt.userChoice;
+		deferredInstallPrompt = null;
+		updateInstallButtons(false);
+	} catch (error) {
+		console.error('Không thể mở lời nhắc cài ứng dụng PWA.', error);
+		showToast('Không thể mở lời nhắc cài ứng dụng. Hãy thử từ menu của trình duyệt.');
+	} finally {
+		button.disabled = false;
+	}
+});
+
+if ('serviceWorker' in navigator) {
+	navigator.serviceWorker.register('/service-worker.js')
+		.catch(error => console.error('Không thể đăng ký service worker.', error));
+}
 
 async function api(url, options = {}) {
 	const response = await fetch(url, {
@@ -64,6 +102,7 @@ async function loadNavigation(page) {
 	topbar.querySelector('[data-topbar-title]').textContent = pageTitles[page];
 	sidebarPlaceholder.replaceWith(sidebar);
 	topbarPlaceholder.replaceWith(topbar);
+	updateInstallButtons(Boolean(deferredInstallPrompt));
 }
 
 function showToast(message, type = 'error') {
@@ -720,18 +759,16 @@ async function setupManagement() {
 
 	function updateManagers() {
 		const level = selectedPositionLevel(roleSelect);
-		managerSelect.replaceChildren(new Option(level === 5 ? 'Bộ Quốc phòng' : '-- Chọn chỉ huy trực tiếp --', ''));
-		users.filter(user => !user.isAdmin && Number(user.level) === level + 1)
+		managerSelect.replaceChildren(new Option('-- Không có chỉ huy trực tiếp --', ''));
+		users.filter(user => !user.isAdmin && Number(user.level) > level)
 			.forEach(user => managerSelect.add(new Option(`${user.name} · ${[user.rank, user.role].filter(Boolean).join(' · ')}`, user.id)));
-		managerSelect.required = level < 5;
 	}
 
 	function updateEditManagers(selectedId = '') {
 		const level = selectedPositionLevel(editMemberRole);
-		editMemberManager.replaceChildren(new Option(level === 5 ? 'Bộ Quốc phòng' : '-- Chọn chỉ huy trực tiếp --', ''));
-		users.filter(user => !user.isAdmin && user.id !== editingUser?.id && Number(user.level) === level + 1)
+		editMemberManager.replaceChildren(new Option('-- Không có chỉ huy trực tiếp --', ''));
+		users.filter(user => !user.isAdmin && user.id !== editingUser?.id && Number(user.level) > level)
 			.forEach(user => editMemberManager.add(new Option(`${user.name} · ${[user.rank, user.role].filter(Boolean).join(' · ')}`, user.id)));
-		editMemberManager.required = level < 5;
 		if (selectedId && [...editMemberManager.options].some(option => option.value === selectedId)) {
 			editMemberManager.value = selectedId;
 		}
@@ -756,7 +793,7 @@ async function setupManagement() {
 		}
 		filtered.forEach(user => {
 			const row = document.createElement('tr');
-			row.innerHTML = `<td><strong>${escapeHtml(user.name)}</strong></td><td>${escapeHtml(user.username)}</td><td>${escapeHtml(user.rank || '—')}</td><td>${escapeHtml(user.role)}</td><td>${escapeHtml(user.manager || 'Bộ Quốc phòng')}</td><td><div class="member-actions"><button class="button small" type="button" data-member-action="edit" data-user-id="${escapeHtml(user.id)}">Sửa</button><button class="button small" type="button" data-member-action="reset-password" data-user-id="${escapeHtml(user.id)}">Đặt lại mật khẩu</button></div></td>`;
+			row.innerHTML = `<td><strong>${escapeHtml(user.name)}</strong></td><td>${escapeHtml(user.username)}</td><td>${escapeHtml(user.rank || '—')}</td><td>${escapeHtml(user.role)}</td><td>${escapeHtml(user.manager || (Number(user.level) === 5 ? 'Bộ Quốc phòng' : 'Chưa thiết lập'))}</td><td><div class="member-actions"><button class="button small" type="button" data-member-action="edit" data-user-id="${escapeHtml(user.id)}">Sửa</button><button class="button small" type="button" data-member-action="reset-password" data-user-id="${escapeHtml(user.id)}">Đặt lại mật khẩu</button></div></td>`;
 			list.append(row);
 		});
 		[1, 2, 3, 4, 5].forEach(level => {

@@ -7,6 +7,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
+    "test": "node --test",
+    "db:check": "node check-db.js",
     "db:setup": "node setup-db.js",
     "db:seed-demo": "node seed-demo.js"
   },

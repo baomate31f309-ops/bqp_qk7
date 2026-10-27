@@ -1,7 +1,7 @@
 require('dotenv').config();
 
 const bcrypt = require('bcryptjs');
-const { Pool } = require('pg');
+const { createDatabasePool } = require('./database');
 
 const users = [
 	{ username: 'quanly1', password: '123456', name: 'Quản lý tài khoản', isAdmin: true },
@@ -21,7 +21,7 @@ const positionTitles = new Map([
 
 async function main() {
 	if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL chưa được cấu hình trong .env');
-	const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: true } : false });
+	const pool = createDatabasePool();
 	const client = await pool.connect();
 	try {
 		await client.query('BEGIN');

@@ -2,8 +2,14 @@
 <html lang="vi">
 <head>
 	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+	<meta name="theme-color" content="#20392f">
+	<meta name="mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="default">
 	<title>Quản lý | Bộ Quốc Phòng</title>
+	<link rel="manifest" href="/manifest.webmanifest">
+	<link rel="icon" href="/app-icon.svg" type="image/svg+xml">
 	<link rel="stylesheet" href="style.css">
 	<script defer src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
 	<script defer src="app.js"></script>
@@ -32,7 +38,7 @@
 							<label for="member-password">Mật khẩu ban đầu<input class="field-input" id="member-password" type="password" required minlength="6" pattern="[0-9]{6,}" inputmode="numeric" title="Nhập ít nhất 6 chữ số, không dùng chữ cái hoặc ký tự khác." autocomplete="new-password" placeholder="Ít nhất 6 chữ số"><small class="field-hint">Tối thiểu 6 chữ số; chỉ sử dụng số từ 0 đến 9.</small></label>
 							<label for="member-rank">Cấp bậc<select class="field-select" id="member-rank" required></select></label>
 							<label for="member-role">Chức vụ<select class="field-select" id="member-role" required></select></label>
-							<label for="member-manager">Chỉ huy trực tiếp<select class="field-select" id="member-manager"><option value="Trần Quốc Bảo" data-level="2">Trần Quốc Bảo · Tiểu đoàn trưởng</option><option value="Nguyễn Hoàng Nam" data-level="3">Nguyễn Hoàng Nam · Trung đoàn trưởng</option><option value="Lê Thu Hà" data-level="4">Lê Thu Hà · Sư đoàn trưởng</option><option value="Phạm Quang Minh" data-level="5">Phạm Quang Minh · Tư lệnh</option><option value="Bộ Quốc phòng" data-level="6">Bộ Quốc phòng</option></select></label>
+							<label for="member-manager">Chỉ huy trực tiếp<select class="field-select" id="member-manager"></select><small class="field-hint">Có thể bỏ trống; chỉ chọn người có chức vụ cấp trên.</small></label>
 							<div class="form-actions"><button class="button primary" type="submit"><i data-lucide="user-plus"></i>Tạo tài khoản</button></div>
 						</form>
 					</section>
@@ -53,7 +59,7 @@
 				<label>Tên đăng nhập<input class="field-input" id="edit-member-username" required autocomplete="off"></label>
 				<label>Cấp bậc<select class="field-select" id="edit-member-rank" required></select></label>
 				<label>Chức vụ<select class="field-select" id="edit-member-role" required></select></label>
-				<label>Chỉ huy trực tiếp<select class="field-select" id="edit-member-manager"></select></label>
+				<label>Chỉ huy trực tiếp<select class="field-select" id="edit-member-manager"></select><small class="field-hint">Có thể bỏ trống; chỉ chọn người có chức vụ cấp trên.</small></label>
 				<p class="confirm-dialog-error" id="edit-member-error" role="alert" hidden></p>
 			</div>
 			<div class="confirm-dialog-actions"><button class="button" type="button" data-close-dialog="edit-member-dialog">Hủy</button><button class="button primary" type="submit" id="save-member-button">Lưu thay đổi</button></div>

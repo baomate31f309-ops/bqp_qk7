@@ -6,6 +6,17 @@
 
 - Node.js 20 trở lên và npm.
 - PostgreSQL đang chạy. Cấu hình hiện có của dự án dùng cổng `54321`; database trong pgAdmin là `bqp_documents`.
+- Neon PostgreSQL tương thích qua thư viện `pg`; giữ nguyên query string SSL mà Neon cung cấp. `DB_SSL=auto` mặc định để PostgreSQL driver đọc SSL từ connection string; `DB_SSL=false` chỉ dành cho PostgreSQL local không bật TLS.
+
+## Chuẩn bị database Neon
+
+1. Tạo project PostgreSQL trong Neon và chọn region gần nơi chạy backend. Với ứng dụng Vercel, trong **Connect** lấy connection string **pooled** cho `DATABASE_URL` (hostname thường có `-pooler`) để runtime dùng giới hạn kết nối hiệu quả hơn.
+2. Tạo biến `MIGRATION_DATABASE_URL` bằng connection string **direct** của Neon (không có `-pooler`). Lệnh migration dùng giao dịch và cần kết nối trực tiếp ổn định. Không đưa hai URL hoặc mật khẩu vào Git; chỉ lưu trong `.env` local hoặc Environment Variables của nơi chạy backend.
+3. Với Neon, đặt `DB_SSL=auto` và không bỏ `sslmode=require` khỏi URL do Neon cung cấp. Có thể đặt `DATABASE_URL` và `MIGRATION_DATABASE_URL` cùng một connection string trong lúc thử nghiệm; môi trường production nên dùng role riêng cho ứng dụng và role migration có quyền thay đổi schema.
+4. Chạy `npm.cmd run db:setup` từ máy có quyền truy cập Neon để tạo schema và áp dụng các migration đã ghi nhận. Lệnh này **chỉ tạo/cập nhật cấu trúc**, không sao chép tài khoản, giáo án hoặc tệp từ PostgreSQL local. Chạy migration trên database Neon mới, trống trước khi dùng dữ liệu thật.
+5. Đặt `DATABASE_URL`, `MIGRATION_DATABASE_URL`, `DB_SSL=auto`, `NODE_ENV=production` và `SESSION_SECRET` (chuỗi ngẫu nhiên riêng, tối thiểu 32 ký tự) trong biến môi trường backend. Chạy `npm.cmd run db:setup` bằng URL direct, sau đó khởi động ứng dụng với URL pooled. Có thể xác minh kết nối bằng `npm.cmd run db:check`.
+
+Không chạy `npm.cmd run db:seed-demo` trên database chứa dữ liệu thật: script seed tạo/cập nhật tài khoản demo với mật khẩu mặc định. Tệp đính kèm hiện được lưu dạng `BYTEA` trong PostgreSQL; tính dung lượng các tệp này vào giới hạn Neon và sao lưu database thường xuyên.
 
 ## Kết nối PostgreSQL lần đầu
 
@@ -66,7 +77,8 @@ Mở `http://127.0.0.1:3000`. Endpoint kiểm tra kết nối là `http://127.0.
 ## Cấu trúc gọn
 
 - `public/`: toàn bộ HTML, CSS, JavaScript giao diện và ảnh.
-- Tài khoản quản lý dùng `public/quan-ly.html` để tạo, tìm kiếm, sửa tài khoản thành viên và đặt lại mật khẩu; cấp bậc, chức vụ được chọn từ danh mục. Danh sách cấp bậc sắp xếp từ cao xuống thấp (tướng, tá, úy, sĩ, binh). Dùng `public/danh-muc.html` để thêm cấp bậc và chức vụ (chức vụ mới gắn với một trong năm cấp duyệt hiện tại); `public/mau-word.html` để tải lên/quản lý mẫu Word.
+- Giao diện co giãn cho điện thoại, máy tính bảng và máy tính. Website hỗ trợ PWA: mở bằng HTTPS (hoặc `localhost` khi phát triển), chọn **Cài ứng dụng** nếu trình duyệt hỗ trợ, hoặc dùng chức năng cài/thêm vào màn hình chính của trình duyệt trên iOS. PWA lưu bộ khung giao diện để mở trang đã tải trước khi mất mạng; đăng nhập, API, dữ liệu và tải tệp vẫn cần máy chủ cùng kết nối mạng.
+- Tài khoản quản lý dùng `public/quan-ly.html` để tạo, tìm kiếm, sửa tài khoản thành viên và đặt lại mật khẩu; cấp bậc, chức vụ được chọn từ danh mục. Chỉ huy trực tiếp có thể bỏ trống hoặc chọn bất kỳ thành viên nào có chức vụ cấp trên; người được chọn cũng có thể nhận giáo án trực tiếp. Danh sách cấp bậc sắp xếp từ cao xuống thấp (tướng, tá, úy, sĩ, binh). Dùng `public/danh-muc.html` để thêm cấp bậc và chức vụ (chức vụ mới gắn với một trong năm cấp duyệt hiện tại); `public/mau-word.html` để tải lên/quản lý mẫu Word.
 - Người dùng gửi giáo án tại `public/gui-giao-an.html`: nhập tiêu đề, chọn loại giáo án và người nhận, tải lên ít nhất một tệp Word (`.doc`/`.docx`) hoặc PDF. Tệp gốc được lưu và chuyển tiếp nguyên byte, không chuyển đổi định dạng; giới hạn 15 MB mỗi tệp.
 - Nội dung giáo án Quân sự gồm: Pháo binh, Công binh, Bộ binh, Trinh sát, Thông tin, SPG, Cối 60 và Cối 80.
 - Mẫu Word được tải nguyên bản về để hoàn thiện trong Microsoft Word rồi tải lên gửi duyệt. Ứng dụng không còn trình soạn giáo án bằng chữ trên web hoặc mẫu soạn nội dung chữ.
@@ -95,3 +107,17 @@ Phiên đăng nhập được lưu trong PostgreSQL; cookie HTTP-only/SameSite. 
 ## Triển khai thật
 
 Đổi toàn bộ mật khẩu demo, dùng HTTPS, đặt `NODE_ENV=production`, tạo `SESSION_SECRET` riêng, bật TLS cho PostgreSQL khi database ở máy khác và hạn chế mạng truy cập database/API. Dữ liệu trình duyệt cũ trong localStorage/IndexedDB không tự được chuyển; hãy sao lưu và nhập lại theo quy trình được kiểm soát trước khi xóa dữ liệu cũ.
+
+### Triển khai ứng dụng trên Render, database trên Neon
+
+1. Tạo database Neon và chạy `npm.cmd run db:setup` từ máy của bạn với `MIGRATION_DATABASE_URL` trỏ tới URL **direct**. Chỉ chạy setup trên database mới/trống sau khi đã kiểm tra migration; không chạy `db:seed-demo` trên môi trường thật.
+2. Đẩy mã nguồn ứng dụng lên một repository GitHub mà bạn kiểm soát. `DataApp/` chứa database local và đang được Git theo dõi trong repository hiện tại; trước khi deploy cần bỏ theo dõi thư mục này nhưng giữ nguyên bản local bằng `git rm -r --cached DataApp`, sau đó commit thay đổi. `.gitignore` đã được cập nhật để tránh thêm lại dữ liệu đó. Việc này không xóa dữ liệu khỏi các commit lịch sử; nếu repository đã công khai hoặc từng chứa dữ liệu nội bộ, không deploy repository đó cho đến khi xử lý lịch sử và xác minh quyền truy cập.
+3. Trong Render, tạo **Blueprint** từ repository này để Render đọc `render.yaml`, hoặc tạo Web Service với:
+   - Build command: `npm ci`
+   - Start command: `npm start`
+   - Health check path: `/api/health`
+   - Root directory: thư mục gốc của project
+4. Trong Environment của dịch vụ, đặt `DATABASE_URL` bằng pooled connection string của Neon (giữ `sslmode=require`). `NODE_ENV`, `DB_SSL`, và `SESSION_SECRET` được khai báo trong `render.yaml`; Render tự tạo secret ngẫu nhiên cho phiên đăng nhập. Không thêm URL direct/mật khẩu vào Git.
+5. Sau khi deploy, kiểm tra URL `/api/health`, rồi mở trang đăng nhập qua HTTPS. Upload vẫn giới hạn 15 MB mỗi tệp và lưu trong Neon PostgreSQL như hiện tại. Không chạy seed demo; tạo tài khoản quản lý qua quy trình bảo mật của ứng dụng.
+
+Render cần một Web Service đủ khả năng chạy liên tục nếu người dùng cần truy cập bất kỳ lúc nào; chọn gói dịch vụ phù hợp trong Render trước khi xác nhận tạo để tránh bật nhầm gói tính phí hoặc gói miễn phí có thể ngủ khi không hoạt động. Ứng dụng lắng nghe `PORT` do Render cấp và tin cậy proxy HTTPS của Render khi chạy production.

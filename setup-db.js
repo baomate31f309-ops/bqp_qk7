@@ -2,15 +2,12 @@ require('dotenv').config();
 
 const fs = require('node:fs/promises');
 const path = require('node:path');
-const { Pool } = require('pg');
+const { createDatabasePool } = require('./database');
 
 async function main() {
 	const connectionString = process.env.MIGRATION_DATABASE_URL || process.env.DATABASE_URL;
 	if (!connectionString) throw new Error('Cần khai báo MIGRATION_DATABASE_URL hoặc DATABASE_URL trong .env');
-	const pool = new Pool({
-		connectionString,
-		ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: true } : false
-	});
+	const pool = createDatabasePool(connectionString);
 	try {
 		await pool.query(await fs.readFile(path.join(__dirname, 'schema.sql'), 'utf8'));
 		await pool.query(`CREATE TABLE IF NOT EXISTS schema_migrations (

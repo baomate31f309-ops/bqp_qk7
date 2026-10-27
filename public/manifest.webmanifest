@@ -1,0 +1,20 @@
+{
+	"id": "/",
+	"name": "Hệ thống quản lý giáo án | Bộ Quốc Phòng",
+	"short_name": "Quản lý giáo án",
+	"description": "Gửi, theo dõi và phê duyệt giáo án nội bộ.",
+	"lang": "vi",
+	"start_url": "/index.html",
+	"scope": "/",
+	"display": "standalone",
+	"background_color": "#f4f6f2",
+	"theme_color": "#20392f",
+	"icons": [
+		{
+			"src": "/app-icon.svg",
+			"sizes": "any",
+			"type": "image/svg+xml",
+			"purpose": "any maskable"
+		}
+	]
+}

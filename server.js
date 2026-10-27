@@ -5,21 +5,19 @@ const crypto = require('node:crypto');
 const express = require('express');
 const session = require('express-session');
 const PgSession = require('connect-pg-simple')(session);
-const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const helmet = require('helmet');
 const { rateLimit } = require('express-rate-limit');
+const { createDatabasePool } = require('./database');
 
 const PORT = Number(process.env.PORT || 3000);
-const HOST = process.env.HOST || '127.0.0.1';
+const HOST = process.env.HOST || (process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1');
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const SESSION_SECRET = process.env.SESSION_SECRET;
-const pool = new Pool({
-	connectionString: process.env.DATABASE_URL,
-	ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: true } : false
-});
+const pool = createDatabasePool();
 const app = express();
+if (process.env.NODE_ENV === 'production') app.set('trust proxy', 1);
 const upload = multer({
 	storage: multer.memoryStorage(),
 	limits: { fileSize: 15 * 1024 * 1024, files: 5 }
@@ -250,7 +248,8 @@ app.post('/api/auth/logout', requireAuth, (req, res, next) => {
 app.get('/api/recipients', requireAuth, requireBusinessUser, asyncRoute(async (req, res) => {
 	const result = await pool.query(
 		`SELECT id, username, name, military_rank, position_title, level, is_admin FROM users
-		 WHERE is_admin = FALSE AND id <> $1 AND level IN ($2, $3)
+		 WHERE is_admin = FALSE AND id <> $1
+		   AND (level IN ($2, $3) OR id = (SELECT manager_id FROM users WHERE id = $1))
 		 ORDER BY level DESC, name`,
 		[req.user.id, req.user.level, req.user.level + 1]
 	);
@@ -292,12 +291,15 @@ app.post('/api/documents', requireAuth, requireBusinessUser, asyncRoute(async (r
 		return res.status(400).json({ error: 'Loại giáo án hoặc nội dung chưa hợp lệ.' });
 	}
 	const recipientResult = await pool.query(
-		'SELECT id, name, level, is_admin FROM users WHERE id = $1',
-		[recipientId]
+		`SELECT id, name, level, is_admin,
+		        id = (SELECT manager_id FROM users WHERE id = $2) AS is_direct_manager
+		 FROM users WHERE id = $1`,
+		[recipientId, req.user.id]
 	);
 	const recipient = recipientResult.rows[0];
-	if (!recipient || recipient.is_admin || ![req.user.level, req.user.level + 1].includes(Number(recipient.level))) {
-		return res.status(403).json({ error: 'Chỉ được gửi cho người cùng cấp hoặc cấp trên một cấp.' });
+	if (!recipient || recipient.is_admin ||
+		(![req.user.level, req.user.level + 1].includes(Number(recipient.level)) && !recipient.is_direct_manager)) {
+		return res.status(403).json({ error: 'Chỉ được gửi cho người cùng cấp, cấp trên liền kề hoặc chỉ huy trực tiếp.' });
 	}
 
 	const client = await pool.connect();
@@ -418,12 +420,14 @@ app.post('/api/drafts', requireAuth, requireBusinessUser, asyncRoute(async (req,
 	if (!validCourse(courseType, courseSubtype)) return res.status(400).json({ error: 'Loại giáo án hoặc nội dung chưa hợp lệ.' });
 	if (recipientId) {
 		const recipient = await pool.query(
-			'SELECT id, level, is_admin FROM users WHERE id = $1',
-			[recipientId]
+			`SELECT id, level, is_admin,
+			        id = (SELECT manager_id FROM users WHERE id = $2) AS is_direct_manager
+			 FROM users WHERE id = $1`,
+			[recipientId, req.user.id]
 		);
 		if (!recipient.rowCount || recipient.rows[0].is_admin ||
-			![req.user.level, req.user.level + 1].includes(Number(recipient.rows[0].level))) {
-			return res.status(403).json({ error: 'Người nhận phải cùng cấp hoặc cấp trên một cấp.' });
+			(![req.user.level, req.user.level + 1].includes(Number(recipient.rows[0].level)) && !recipient.rows[0].is_direct_manager)) {
+			return res.status(403).json({ error: 'Người nhận phải cùng cấp, cấp trên liền kề hoặc chỉ huy trực tiếp.' });
 		}
 	}
 	const draftId = id || crypto.randomUUID();
@@ -527,7 +531,7 @@ app.get('/api/management/users', requireAuth, requireAdmin, asyncRoute(async (_r
 		...publicUser(row),
 		manager: row.managerName
 			? [row.managerName, row.managerRank, row.managerPosition || roles.get(Number(row.managerLevel))].filter(Boolean).join(' · ')
-			: 'Bộ Quốc phòng'
+			: Number(row.level) === 5 ? 'Bộ Quốc phòng' : ''
 	})) });
 }));
 
@@ -647,11 +651,10 @@ app.post('/api/management/users', requireAuth, requireAdmin, asyncRoute(async (r
 	if (!/^\d{6,}$/.test(String(password || ''))) {
 		return res.status(400).json({ error: 'Mật khẩu phải có ít nhất 6 chữ số và chỉ chứa chữ số.' });
 	}
-	if (selectedLevel < 5 && !managerId) return res.status(400).json({ error: 'Cần chọn chỉ huy trực tiếp.' });
 	if (managerId) {
 		const manager = await pool.query('SELECT level, is_admin FROM users WHERE id = $1', [managerId]);
-		if (!manager.rowCount || manager.rows[0].is_admin || Number(manager.rows[0].level) !== selectedLevel + 1) {
-			return res.status(400).json({ error: 'Chỉ huy trực tiếp phải cao hơn đúng một cấp.' });
+		if (!manager.rowCount || manager.rows[0].is_admin || Number(manager.rows[0].level) <= selectedLevel) {
+			return res.status(400).json({ error: 'Chỉ huy trực tiếp phải có chức vụ cấp trên.' });
 		}
 	}
 	const result = await pool.query(
@@ -674,12 +677,11 @@ app.put('/api/management/users/:id', requireAuth, requireAdmin, asyncRoute(async
 	if (!normalizedUsername || !selectedName || !rankExists.rowCount || !position.rowCount) {
 		return res.status(400).json({ error: 'Tên tài khoản, họ tên, cấp bậc và chức vụ trong danh sách là bắt buộc.' });
 	}
-	if (selectedLevel < 5 && !managerId) return res.status(400).json({ error: 'Cần chọn chỉ huy trực tiếp.' });
 	if (managerId) {
 		if (managerId === req.params.id) return res.status(400).json({ error: 'Không thể chọn chính thành viên làm chỉ huy.' });
 		const manager = await pool.query('SELECT level, is_admin FROM users WHERE id = $1', [managerId]);
-		if (!manager.rowCount || manager.rows[0].is_admin || Number(manager.rows[0].level) !== selectedLevel + 1) {
-			return res.status(400).json({ error: 'Chỉ huy trực tiếp phải cao hơn đúng một cấp.' });
+		if (!manager.rowCount || manager.rows[0].is_admin || Number(manager.rows[0].level) <= selectedLevel) {
+			return res.status(400).json({ error: 'Chỉ huy trực tiếp phải có chức vụ cấp trên.' });
 		}
 	}
 	const member = await pool.query('SELECT id, is_admin FROM users WHERE id = $1', [req.params.id]);
@@ -687,11 +689,11 @@ app.put('/api/management/users/:id', requireAuth, requireAdmin, asyncRoute(async
 		return res.status(404).json({ error: 'Không tìm thấy tài khoản thành viên.' });
 	}
 	const incompatibleSubordinates = await pool.query(
-		'SELECT 1 FROM users WHERE manager_id = $1 AND level <> $2 LIMIT 1',
-		[req.params.id, selectedLevel - 1]
+		'SELECT 1 FROM users WHERE manager_id = $1 AND level >= $2 LIMIT 1',
+		[req.params.id, selectedLevel]
 	);
 	if (incompatibleSubordinates.rowCount) {
-		return res.status(409).json({ error: 'Không thể đổi chức vụ vì có cấp dưới sẽ không còn đúng cấp chỉ huy. Hãy chuyển cấp dưới sang chỉ huy khác trước.' });
+		return res.status(409).json({ error: 'Không thể đổi chức vụ vì có cấp dưới không còn thấp hơn chỉ huy. Hãy chuyển cấp dưới sang chỉ huy khác trước.' });
 	}
 	const result = await pool.query(
 		`UPDATE users
@@ -718,7 +720,8 @@ app.post('/api/management/users/:id/reset-password', requireAuth, requireAdmin, 
 
 const staticFiles = new Set([
 	'index.html', 'dashboard.html', 'quan-ly.html', 'danh-muc.html', 'mau-word.html', 'gui-giao-an.html',
-	'app.js', 'navigation.html', 'style.css', 'Vietnam_Ministry_of_National_Defence_emblem.svg.webp'
+	'app.js', 'navigation.html', 'style.css', 'Vietnam_Ministry_of_National_Defence_emblem.svg.webp',
+	'manifest.webmanifest', 'service-worker.js', 'offline.html', 'app-icon.svg'
 ]);
 app.get('/', (_req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
 app.get('/:file', asyncRoute(async (req, res, next) => {
