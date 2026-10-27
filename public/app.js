@@ -693,6 +693,7 @@ async function setupManagement() {
 	const list = document.getElementById('member-list');
 	const memberSearch = document.getElementById('member-search');
 	const memberCount = document.getElementById('member-count');
+	const hierarchy = document.querySelector('[data-hierarchy]');
 	const form = document.getElementById('member-form');
 	const roleSelect = document.getElementById('member-role');
 	const managerSelect = document.getElementById('member-manager');
@@ -796,9 +797,37 @@ async function setupManagement() {
 			row.innerHTML = `<td><strong>${escapeHtml(user.name)}</strong></td><td>${escapeHtml(user.username)}</td><td>${escapeHtml(user.rank || '—')}</td><td>${escapeHtml(user.role)}</td><td>${escapeHtml(user.manager || (Number(user.level) === 5 ? 'Bộ Quốc phòng' : 'Chưa thiết lập'))}</td><td><div class="member-actions"><button class="button small" type="button" data-member-action="edit" data-user-id="${escapeHtml(user.id)}">Sửa</button><button class="button small" type="button" data-member-action="reset-password" data-user-id="${escapeHtml(user.id)}">Đặt lại mật khẩu</button></div></td>`;
 			list.append(row);
 		});
-		[1, 2, 3, 4, 5].forEach(level => {
-			document.querySelector(`[data-count-level="${level}"]`).textContent =
-				`${users.filter(user => !user.isAdmin && Number(user.level) === level).length} người`;
+		renderHierarchy();
+	}
+
+	function renderHierarchy() {
+		hierarchy.replaceChildren();
+		const positions = [...catalogs.positions].sort((a, b) =>
+			Number(b.level) - Number(a.level) || a.name.localeCompare(b.name, 'vi'));
+		if (!positions.length) {
+			const empty = document.createElement('p');
+			empty.className = 'empty-row';
+			empty.textContent = 'Chưa có chức vụ trong danh mục.';
+			hierarchy.append(empty);
+			return;
+		}
+		positions.forEach(position => {
+			const members = users.filter(user => !user.isAdmin && user.role === position.name);
+			const row = document.createElement('div');
+			row.className = 'level';
+			const details = document.createElement('div');
+			const title = document.createElement('strong');
+			title.textContent = position.name;
+			const memberNames = document.createElement('span');
+			memberNames.textContent = members.length
+				? members.map(user => user.name).join(', ')
+				: 'Chưa có thành viên ở chức vụ này';
+			details.append(title, memberNames);
+			const count = document.createElement('span');
+			count.className = 'count';
+			count.textContent = `${members.length} người`;
+			row.append(details, count);
+			hierarchy.append(row);
 		});
 	}
 
